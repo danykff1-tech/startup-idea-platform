@@ -1,65 +1,45 @@
-import Image from "next/image";
+import { createClient } from '@/lib/supabase/server'
+import IdeaCard from '@/components/IdeaCard'
 
-export default function Home() {
+export default async function HomePage() {
+  const supabase = await createClient()
+
+  const { data: ideas } = await supabase
+    .from('ideas')
+    .select('id, title, summary, tags, source_platform, ai_score, created_at')
+    .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="max-w-6xl mx-auto px-4 py-12">
+      {/* 히어로 섹션 */}
+      <div className="text-center mb-12">
+        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight">
+          AI가 발굴한<br />사업 아이디어
+        </h1>
+        <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
+          Reddit, IndieHackers, ProductHunt에서 매일 수집 · 분석된<br />
+          검증된 창업 아이디어를 탐색하세요
+        </p>
+      </div>
+
+      {/* 아이디어 목록 */}
+      {!ideas || ideas.length === 0 ? (
+        <div className="text-center py-24">
+          <div className="text-5xl mb-4">✦</div>
+          <p className="text-lg text-zinc-500 dark:text-zinc-400">아직 등록된 아이디어가 없습니다.</p>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2">
+            AI 파이프라인이 곧 새로운 아이디어를 추가합니다!
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {ideas.map((idea) => (
+            <IdeaCard key={idea.id} idea={idea} />
+          ))}
         </div>
-      </main>
-    </div>
-  );
+      )}
+    </main>
+  )
 }
