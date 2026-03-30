@@ -17,12 +17,12 @@ export default async function Navbar() {
   }
 
   return (
-    <nav className="border-b border-black/10 dark:border-white/10 bg-white dark:bg-zinc-900 sticky top-0 z-50">
+    <nav className="border-b border-border bg-card sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-foreground hover:opacity-80 transition-opacity">
           IdeaFlow ✦
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {user ? (
             <>
               {isPro ? (
@@ -32,17 +32,23 @@ export default async function Navbar() {
               ) : (
                 <Link
                   href="/pricing"
-                  className="text-sm font-medium px-3 py-1.5 rounded-lg bg-foreground text-background hover:opacity-80 transition-opacity"
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   Pro 업그레이드
                 </Link>
               )}
+              <Link
+                href="/profile"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                내 프로필
+              </Link>
               <LogoutButton />
             </>
           ) : (
             <Link
               href="/auth/login"
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-foreground text-background hover:opacity-80 transition-opacity"
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               로그인
             </Link>
