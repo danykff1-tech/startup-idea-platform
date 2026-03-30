@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'IdeaFlow – AI 사업 아이디어 큐레이션',
+  title: 'Idealike – AI 사업 아이디어 큐레이션',
   description: 'Reddit, IndieHackers, ProductHunt에서 AI가 발굴한 검증된 사업 아이디어',
 }
 
