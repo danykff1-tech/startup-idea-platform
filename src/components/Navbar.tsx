@@ -20,7 +20,7 @@ export default async function Navbar() {
     <nav className="border-b border-border bg-card sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="text-xl font-bold text-foreground hover:opacity-80 transition-opacity">
-          IdeaFlow ✦
+          Idealike
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
