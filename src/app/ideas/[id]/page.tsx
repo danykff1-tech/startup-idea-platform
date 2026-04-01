@@ -7,6 +7,27 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+/* ── Seeded PRNG shuffle (same algorithm as homepage) ── */
+function seededShuffle<T>(array: T[], seed: number): T[] {
+  const out = [...array]
+  let s = seed
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 16807) % 2147483647
+    const j = s % (i + 1)
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+function hashCode(str: string): number {
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash) || 1
+}
+
 /* ── Generate deterministic "search interest" from a keyword string ── */
 function keywordInterest(keyword: string, base: number): number {
   let h = 0
@@ -69,41 +90,56 @@ export default async function IdeaDetailPage({ params }: PageProps) {
 
   if (!profile?.is_pro) {
     const today = new Date().toISOString().split('T')[0]
-    const { data: viewData } = await supabase
-      .from('daily_view_tracking')
-      .select('view_count')
-      .eq('user_id', user.id)
-      .eq('view_date', today)
-      .single()
 
-    const viewCount = viewData?.view_count ?? 0
+    /* ── Check if this idea is one of the user's daily 3 (free to view) ── */
+    const { data: allIdeas } = await supabase
+      .from('ideas')
+      .select('id')
+      .eq('is_published', true)
 
-    if (viewCount >= FREE_VIEWS_PER_DAY) {
-      return (
-        <div className="min-h-[80vh] flex items-center justify-center px-4">
-          <div className="max-w-md text-center">
-            <div className="text-5xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold mb-2">Daily Limit Reached</h2>
-            <p className="text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
-              Free plan allows {FREE_VIEWS_PER_DAY} idea analyses per day.
-              <br />
-              Upgrade to Pro for unlimited access to all ideas.
-            </p>
-            <Link
-              href="/pricing"
-              className="inline-block px-6 py-3 rounded-xl bg-foreground text-background font-medium hover:opacity-80 transition-opacity"
-            >
-              Upgrade to Pro ($15/mo)
-            </Link>
+    const seed = hashCode(user.id + today)
+    const shuffled = allIdeas ? seededShuffle(allIdeas, seed) : []
+    const dailyIds = new Set(shuffled.slice(0, 3).map((i) => i.id))
+    const isDailyIdea = dailyIds.has(id)
+
+    if (!isDailyIdea) {
+      /* ── Not a daily idea → apply view limit ── */
+      const { data: viewData } = await supabase
+        .from('daily_view_tracking')
+        .select('view_count')
+        .eq('user_id', user.id)
+        .eq('view_date', today)
+        .single()
+
+      const viewCount = viewData?.view_count ?? 0
+
+      if (viewCount >= FREE_VIEWS_PER_DAY) {
+        return (
+          <div className="min-h-[80vh] flex items-center justify-center px-4">
+            <div className="max-w-md text-center">
+              <div className="text-5xl mb-4">🔒</div>
+              <h2 className="text-2xl font-bold mb-2">Daily Limit Reached</h2>
+              <p className="text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
+                Free plan allows {FREE_VIEWS_PER_DAY} extra idea analyses per day.
+                <br />
+                Upgrade to Pro for unlimited access to all ideas.
+              </p>
+              <Link
+                href="/pricing"
+                className="inline-block px-6 py-3 rounded-xl bg-foreground text-background font-medium hover:opacity-80 transition-opacity"
+              >
+                Upgrade to Pro ($15/mo)
+              </Link>
+            </div>
           </div>
-        </div>
-      )
-    }
+        )
+      }
 
-    await supabase.rpc('increment_daily_view', {
-      p_user_id: user.id,
-      p_date: today,
-    })
+      await supabase.rpc('increment_daily_view', {
+        p_user_id: user.id,
+        p_date: today,
+      })
+    }
   }
 
   const { data: idea } = await supabase
@@ -123,7 +159,6 @@ export default async function IdeaDetailPage({ params }: PageProps) {
      viability.revenuePotential + viability.feasibility) / 5
   )
 
-  /* keywords = tags + first 2 target customer segments */
   const keywords = [
     ...(idea.tags ?? []).slice(0, 4),
     ...(idea.target_customers ?? []).slice(0, 2),

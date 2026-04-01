@@ -24,10 +24,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-4">✦</div>
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            IdeaFlow 시작하기
+            Get Started with Idealike
           </h1>
           <p className="text-zinc-500 dark:text-zinc-400">
-            AI가 발굴한 사업 아이디어를 확인하세요
+            Discover AI-curated business ideas every day
           </p>
         </div>
 
@@ -42,11 +42,11 @@ export default function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          {loading ? '로그인 중...' : 'Google로 시작하기'}
+          {loading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
         <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 mt-6">
-          로그인 시 서비스 이용약관에 동의하는 것으로 간주됩니다.
+          By signing in, you agree to our Terms of Service.
         </p>
       </div>
     </div>
