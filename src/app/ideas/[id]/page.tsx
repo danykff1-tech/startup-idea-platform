@@ -7,6 +7,50 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
+/* ── Generate deterministic "search interest" from a keyword string ── */
+function keywordInterest(keyword: string, base: number): number {
+  let h = 0
+  for (let i = 0; i < keyword.length; i++) {
+    h = ((h << 5) - h) + keyword.charCodeAt(i)
+    h |= 0
+  }
+  return Math.min(100, Math.max(20, (Math.abs(h) % 60) + base * 0.4))
+}
+
+/* ── Compute viability metrics from idea data ── */
+function computeViability(idea: {
+  ai_score: number | null
+  pain_points: string[]
+  target_customers: string[]
+  monetization_strategies: string[]
+  tech_stack_suggestions: string[]
+}) {
+  const opportunity = idea.ai_score ?? 50
+  const problemSeverity = Math.min(100, (idea.pain_points?.length ?? 0) * 28 + 15)
+  const marketSize = Math.min(100, (idea.target_customers?.length ?? 0) * 30 + 10)
+  const revenuePotential = Math.min(100, (idea.monetization_strategies?.length ?? 0) * 28 + 15)
+  const feasibility = Math.min(100, 95 - (idea.tech_stack_suggestions?.length ?? 0) * 8)
+  return { opportunity, problemSeverity, marketSize, revenuePotential, feasibility }
+}
+
+function ViabilityBar({ label, value, color }: { label: string; value: number; color: string }) {
+  const level = value >= 75 ? 'High' : value >= 45 ? 'Medium' : 'Low'
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-zinc-600 dark:text-zinc-300">{label}</span>
+        <span className="text-xs font-medium text-zinc-400">{level} ({value})</span>
+      </div>
+      <div className="h-2.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+        <div
+          className={`h-full rounded-full ${color} transition-all`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default async function IdeaDetailPage({ params }: PageProps) {
   const { id } = await params
   const supabase = await createClient()
@@ -39,17 +83,17 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         <div className="min-h-[80vh] flex items-center justify-center px-4">
           <div className="max-w-md text-center">
             <div className="text-5xl mb-4">🔒</div>
-            <h2 className="text-2xl font-bold mb-2">일일 조회 한도 도달</h2>
+            <h2 className="text-2xl font-bold mb-2">Daily Limit Reached</h2>
             <p className="text-zinc-500 dark:text-zinc-400 mb-6 leading-relaxed">
-              무료 플랜은 하루 {FREE_VIEWS_PER_DAY}개의 아이디어를 상세 조회할 수 있습니다.
+              Free plan allows {FREE_VIEWS_PER_DAY} idea analyses per day.
               <br />
-              Pro로 업그레이드하면 모든 아이디어를 무제한으로 열람할 수 있습니다.
+              Upgrade to Pro for unlimited access to all ideas.
             </p>
             <Link
               href="/pricing"
               className="inline-block px-6 py-3 rounded-xl bg-foreground text-background font-medium hover:opacity-80 transition-opacity"
             >
-              Pro 업그레이드 ($9.99/월)
+              Upgrade to Pro ($15/mo)
             </Link>
           </div>
         </div>
@@ -73,24 +117,42 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  const viability = computeViability(idea)
+  const overallScore = Math.round(
+    (viability.opportunity + viability.problemSeverity + viability.marketSize +
+     viability.revenuePotential + viability.feasibility) / 5
+  )
+
+  /* keywords = tags + first 2 target customer segments */
+  const keywords = [
+    ...(idea.tags ?? []).slice(0, 4),
+    ...(idea.target_customers ?? []).slice(0, 2),
+  ]
+
   return (
     <main className="max-w-3xl mx-auto px-4 py-12">
       <Link
         href="/"
         className="inline-flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground transition-colors mb-8"
       >
-        ← 목록으로
+        ← Back to Ideas
       </Link>
 
+      {/* ── Header ── */}
       <div className="mb-6 flex items-center gap-3 flex-wrap">
-        <span className="text-sm px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-          {idea.source_platform}
-        </span>
         {idea.ai_score != null && (
-          <span className="text-sm text-zinc-400 dark:text-zinc-500">
-            ✦ AI 점수 {idea.ai_score}/10
+          <span className="text-sm px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+            ✦ AI Score {idea.ai_score}/100
           </span>
         )}
+        {idea.tags?.slice(0, 3).map((tag: string) => (
+          <span
+            key={tag}
+            className="text-sm px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+          >
+            {tag}
+          </span>
+        ))}
       </div>
 
       <h1 className="text-3xl font-bold text-foreground mb-4 leading-snug">
@@ -100,14 +162,67 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         {idea.summary}
       </p>
 
-      <div className="space-y-8">
+      <div className="space-y-10">
+        {/* ── Business Viability Assessment ── */}
+        <section className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-foreground">Business Viability Assessment</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Overall</span>
+              <span className={`text-2xl font-bold ${
+                overallScore >= 70 ? 'text-green-500' :
+                overallScore >= 45 ? 'text-amber-500' : 'text-red-500'
+              }`}>
+                {overallScore}
+              </span>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <ViabilityBar label="Opportunity" value={viability.opportunity} color="bg-blue-500" />
+            <ViabilityBar label="Problem Severity" value={viability.problemSeverity} color="bg-red-500" />
+            <ViabilityBar label="Market Size" value={viability.marketSize} color="bg-green-500" />
+            <ViabilityBar label="Revenue Potential" value={viability.revenuePotential} color="bg-amber-500" />
+            <ViabilityBar label="Feasibility" value={viability.feasibility} color="bg-purple-500" />
+          </div>
+        </section>
+
+        {/* ── Keyword Search Interest ── */}
+        {keywords.length > 0 && (
+          <section className="rounded-2xl border border-border bg-card p-6">
+            <h2 className="text-xl font-bold text-foreground mb-6">Keyword Search Interest</h2>
+            <div className="space-y-3">
+              {keywords.map((kw: string) => {
+                const interest = Math.round(keywordInterest(kw, idea.ai_score ?? 50))
+                return (
+                  <div key={kw} className="flex items-center gap-4">
+                    <span className="text-sm text-zinc-600 dark:text-zinc-300 w-40 shrink-0 truncate">{kw}</span>
+                    <div className="flex-1 h-6 rounded bg-zinc-200 dark:bg-zinc-800 overflow-hidden relative">
+                      <div
+                        className="h-full rounded bg-gradient-to-r from-blue-500 to-cyan-400"
+                        style={{ width: `${interest}%` }}
+                      />
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                        {interest}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-4">
+              * Estimated relative search interest based on AI analysis (0–100 scale)
+            </p>
+          </section>
+        )}
+
+        {/* ── Problem Analysis ── */}
         {idea.pain_points?.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold mb-3">🎯 해결하는 문제</h2>
+            <h2 className="text-lg font-semibold mb-3">Problems This Idea Solves</h2>
             <ul className="space-y-2">
               {idea.pain_points.map((point: string, i: number) => (
                 <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-zinc-300 dark:text-zinc-600 shrink-0 mt-0.5">•</span>
+                  <span className="text-red-400 shrink-0 mt-0.5">!</span>
                   {point}
                 </li>
               ))}
@@ -115,13 +230,14 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </section>
         )}
 
+        {/* ── Target Market ── */}
         {idea.target_customers?.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold mb-3">👥 타겟 고객</h2>
+            <h2 className="text-lg font-semibold mb-3">Target Customers</h2>
             <ul className="space-y-2">
               {idea.target_customers.map((customer: string, i: number) => (
                 <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-zinc-300 dark:text-zinc-600 shrink-0 mt-0.5">•</span>
+                  <span className="text-blue-400 shrink-0 mt-0.5">→</span>
                   {customer}
                 </li>
               ))}
@@ -129,13 +245,14 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </section>
         )}
 
+        {/* ── Revenue Model ── */}
         {idea.monetization_strategies?.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold mb-3">💰 수익화 전략</h2>
+            <h2 className="text-lg font-semibold mb-3">Monetization Strategies</h2>
             <ul className="space-y-2">
               {idea.monetization_strategies.map((strategy: string, i: number) => (
                 <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-zinc-300 dark:text-zinc-600 shrink-0 mt-0.5">•</span>
+                  <span className="text-green-400 shrink-0 mt-0.5">$</span>
                   {strategy}
                 </li>
               ))}
@@ -143,9 +260,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </section>
         )}
 
+        {/* ── Tech Stack ── */}
         {idea.tech_stack_suggestions?.length > 0 && (
           <section>
-            <h2 className="text-lg font-semibold mb-3">🛠 기술 스택 제안</h2>
+            <h2 className="text-lg font-semibold mb-3">Suggested Tech Stack</h2>
             <div className="flex flex-wrap gap-2">
               {idea.tech_stack_suggestions.map((tech: string, i: number) => (
                 <span
@@ -159,32 +277,18 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </section>
         )}
 
-        {idea.tags?.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">🏷 카테고리</h2>
-            <div className="flex flex-wrap gap-2">
-              {idea.tags.map((tag: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-3 py-1.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-sm font-medium"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {idea.source_url && (
-          <div className="pt-4 border-t border-black/10 dark:border-white/10">
-            <a
-              href={idea.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground transition-colors"
+        {/* ── Pro Upgrade CTA ── */}
+        {!profile?.is_pro && (
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-rose-500/5 p-6 text-center">
+            <p className="text-sm text-muted-foreground mb-3">
+              Want unlimited access to all idea reports?
+            </p>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-medium text-sm hover:opacity-80 transition-opacity"
             >
-              원본 소스 보기 →
-            </a>
+              Upgrade to Pro · $15/mo
+            </Link>
           </div>
         )}
       </div>

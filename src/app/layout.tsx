@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Idealike – AI 사업 아이디어 큐레이션',
-  description: 'Reddit, IndieHackers, ProductHunt에서 AI가 발굴한 검증된 사업 아이디어',
+  title: 'Idealike – AI-Powered Business Idea Curation',
+  description: 'Discover validated startup ideas curated and analyzed by AI every day.',
 }
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Navbar />
         <div className="flex-1">

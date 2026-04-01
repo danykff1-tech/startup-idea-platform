@@ -1,11 +1,14 @@
-// 무료 사용자 일일 아이디어 상세 조회 제한
+// Free user daily idea detail view limit
 export const FREE_VIEWS_PER_DAY = 3
 
-// 지원 데이터 소스 플랫폼
-export const PLATFORMS = ['reddit', 'indiehackers', 'producthunt'] as const
+// Pro plan price
+export const PRO_PRICE = 15
+
+// Supported data source platforms
+export const PLATFORMS = ['reddit', 'indiehackers', 'producthunt', 'hackernews'] as const
 export type Platform = typeof PLATFORMS[number]
 
-// 승인된 태그 목록 (AI 프롬프트와 동일하게 유지)
+// Approved tag list (keep in sync with AI prompt)
 export const APPROVED_TAGS = [
   'SaaS',
   'AI',
@@ -26,5 +29,5 @@ export const APPROVED_TAGS = [
 ] as const
 export type Tag = typeof APPROVED_TAGS[number]
 
-// Lemon Squeezy 구독 활성 상태
+// Lemon Squeezy active subscription statuses
 export const ACTIVE_SUBSCRIPTION_STATUSES = ['active', 'on_trial'] as const

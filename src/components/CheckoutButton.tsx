@@ -14,13 +14,13 @@ export default function CheckoutButton() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error ?? '오류가 발생했습니다.')
+        setError(data.error ?? 'An error occurred.')
         return
       }
 
       window.location.href = data.checkoutUrl
     } catch {
-      setError('네트워크 오류가 발생했습니다.')
+      setError('A network error occurred.')
     } finally {
       setLoading(false)
     }
@@ -33,7 +33,7 @@ export default function CheckoutButton() {
         disabled={loading}
         className="w-full py-3 rounded-xl text-sm font-medium bg-foreground text-background hover:opacity-80 transition-opacity disabled:opacity-50 cursor-pointer"
       >
-        {loading ? '처리 중...' : 'Pro 업그레이드 시작'}
+        {loading ? 'Processing...' : 'Upgrade to Pro'}
       </button>
       {error && (
         <p className="text-xs text-red-500 mt-2 text-center">{error}</p>

@@ -34,14 +34,14 @@ export default async function Navbar() {
                   href="/pricing"
                   className="text-sm font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
-                  Pro 업그레이드
+                  Upgrade to Pro
                 </Link>
               )}
               <Link
                 href="/profile"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                내 프로필
+                Profile
               </Link>
               <LogoutButton />
             </>
@@ -50,7 +50,7 @@ export default async function Navbar() {
               href="/auth/login"
               className="text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
             >
-              로그인
+              Sign In
             </Link>
           )}
         </div>
