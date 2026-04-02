@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { FREE_VIEWS_PER_DAY } from '@/lib/constants'
+import BookmarkButton from '@/components/BookmarkButton'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -88,7 +89,9 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     .eq('id', user.id)
     .single()
 
-  if (!profile?.is_pro) {
+  const isPro = profile?.is_pro ?? false
+
+  if (!isPro) {
     const today = new Date().toISOString().split('T')[0]
 
     /* ── Check if this idea is one of the user's daily 3 (free to view) ── */
@@ -153,6 +156,18 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     notFound()
   }
 
+  /* ── Bookmark state for Pro users ── */
+  let isBookmarked = false
+  if (isPro) {
+    const { data: bm } = await supabase
+      .from('bookmarks')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('idea_id', id)
+      .maybeSingle()
+    isBookmarked = !!bm
+  }
+
   const viability = computeViability(idea)
   const overallScore = Math.round(
     (viability.opportunity + viability.problemSeverity + viability.marketSize +
@@ -174,20 +189,27 @@ export default async function IdeaDetailPage({ params }: PageProps) {
       </Link>
 
       {/* ── Header ── */}
-      <div className="mb-6 flex items-center gap-3 flex-wrap">
-        {idea.ai_score != null && (
-          <span className="text-sm px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
-            ✦ AI Score {idea.ai_score}/100
-          </span>
-        )}
-        {idea.tags?.slice(0, 3).map((tag: string) => (
-          <span
-            key={tag}
-            className="text-sm px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-          >
-            {tag}
-          </span>
-        ))}
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          {idea.ai_score != null && (
+            <span className="text-sm px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+              ✦ AI Score {idea.ai_score}/100
+            </span>
+          )}
+          {idea.tags?.slice(0, 3).map((tag: string) => (
+            <span
+              key={tag}
+              className="text-sm px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+        <BookmarkButton
+          ideaId={idea.id}
+          initialBookmarked={isBookmarked}
+          isPro={isPro}
+        />
       </div>
 
       <h1 className="text-3xl font-bold text-foreground mb-4 leading-snug">
@@ -313,7 +335,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         )}
 
         {/* ── Pro Upgrade CTA ── */}
-        {!profile?.is_pro && (
+        {!isPro && (
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-rose-500/5 p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">
               Want unlimited access to all idea reports?

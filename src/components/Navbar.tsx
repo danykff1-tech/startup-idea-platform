@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Bookmark } from 'lucide-react'
 import LogoutButton from './LogoutButton'
 
 export default async function Navbar() {
@@ -26,9 +27,18 @@ export default async function Navbar() {
           {user ? (
             <>
               {isPro ? (
-                <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                  Pro ✦
-                </span>
+                <>
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                    Pro ✦
+                  </span>
+                  <Link
+                    href="/bookmarks"
+                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Bookmark size={15} />
+                    Saved
+                  </Link>
+                </>
               ) : (
                 <Link
                   href="/pricing"

@@ -110,6 +110,19 @@ export default async function HomePage() {
     )
   }
 
+  /* ── Logged in → fetch Pro status + bookmarks ── */
+  const { data: profile } = await supabase
+    .from('users')
+    .select('is_pro')
+    .eq('id', user.id)
+    .single()
+  const isPro = profile?.is_pro ?? false
+
+  const { data: bookmarkRows } = isPro
+    ? await supabase.from('bookmarks').select('idea_id').eq('user_id', user.id)
+    : { data: [] }
+  const bookmarkedIds = new Set((bookmarkRows ?? []).map((b: { idea_id: string }) => b.idea_id))
+
   /* ── Logged in → fetch & show 3 random ideas ── */
   const seed = hashCode(user.id + today)
   const shuffled = ideas ? seededShuffle(ideas, seed) : []
@@ -140,7 +153,12 @@ export default async function HomePage() {
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayed.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} />
+              <IdeaCard
+                key={idea.id}
+                idea={idea}
+                isPro={isPro}
+                isBookmarked={bookmarkedIds.has(idea.id)}
+              />
             ))}
           </div>
 
