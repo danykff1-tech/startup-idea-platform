@@ -92,7 +92,8 @@ export default async function BookmarksPage() {
       ) : (
         <div className="space-y-4">
           {bookmarks.map((bm) => {
-            const idea = bm.ideas as {
+            const raw = bm.ideas
+            const idea = (Array.isArray(raw) ? raw[0] : raw) as {
               id: string; title: string; summary: string; tags: string[]; ai_score: number | null
             } | null
             if (!idea) return null
