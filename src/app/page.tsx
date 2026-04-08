@@ -61,6 +61,8 @@ export default async function HomePage() {
     .from('ideas')
     .select('id, title, summary, tags, source_platform, ai_score, created_at')
     .eq('is_published', true)
+    .order('created_at', { ascending: false })
+    .limit(30)
 
   /* ── Guest: show 1 preview card + 2 locked ── */
   if (!user) {
@@ -123,14 +125,66 @@ export default async function HomePage() {
     : { data: [] }
   const bookmarkedIds = new Set((bookmarkRows ?? []).map((b: { idea_id: string }) => b.idea_id))
 
-  /* ── Logged in → fetch & show 3 random ideas ── */
+  /* ── Free: 3 random ideas ── */
   const seed = hashCode(user.id + today)
   const shuffled = ideas ? seededShuffle(ideas, seed) : []
-  const displayed = shuffled.slice(0, 3)
+
+  if (!isPro) {
+    const displayed = shuffled.slice(0, 3)
+    return (
+      <main className="max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight">
+            Today&apos;s Ideas<br />Curated for You
+          </h1>
+          <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
+            Fresh startup ideas analyzed by AI · Updated daily
+          </p>
+        </div>
+
+        {displayed.length === 0 ? (
+          <div className="text-center py-24">
+            <div className="text-5xl mb-4">✦</div>
+            <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {displayed.map((idea) => (
+                <IdeaCard key={idea.id} idea={idea} isPro={false} isBookmarked={false} />
+              ))}
+            </div>
+            <div className="mt-8">
+              <Link href="/pricing" className="block group">
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 p-8 text-center hover:border-amber-500/40 transition-colors">
+                  <div className="flex items-center justify-center gap-3 mb-3">
+                    <Lock size={20} className="text-amber-500" />
+                    <span className="text-lg font-bold text-foreground">Unlock More Ideas</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upgrade to Pro to see today&apos;s new ideas first, full analysis, and keyword trends.
+                  </p>
+                  <span className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-medium text-sm group-hover:opacity-80 transition-opacity">
+                    Upgrade to Pro · $15/mo
+                  </span>
+                </div>
+              </Link>
+            </div>
+          </>
+        )}
+      </main>
+    )
+  }
+
+  /* ── Pro: today's new ideas + recent 9 ── */
+  const allIdeas = ideas ?? []
+  const todayIdeas = allIdeas.filter((i) =>
+    i.created_at.startsWith(today)
+  )
+  const recentIdeas = allIdeas.filter((i) => !i.created_at.startsWith(today)).slice(0, 9)
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">
-      {/* Hero */}
       <div className="text-center mb-12">
         <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight">
           Today&apos;s Ideas<br />Curated for You
@@ -140,48 +194,52 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {/* Idea cards */}
-      {displayed.length === 0 ? (
+      {allIdeas.length === 0 ? (
         <div className="text-center py-24">
           <div className="text-5xl mb-4">✦</div>
           <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
-          <p className="text-sm text-zinc-400 dark:text-zinc-500 mt-2">
-            Our AI pipeline will add new ideas soon!
-          </p>
         </div>
       ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayed.map((idea) => (
-              <IdeaCard
-                key={idea.id}
-                idea={idea}
-                isPro={isPro}
-                isBookmarked={bookmarkedIds.has(idea.id)}
-              />
-            ))}
-          </div>
-
-          {/* Pro upgrade card */}
-          <div className="mt-8">
-            <Link href="/pricing" className="block group">
-              <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 p-8 text-center hover:border-amber-500/40 transition-colors">
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <Lock size={20} className="text-amber-500" />
-                  <span className="text-lg font-bold text-foreground">
-                    Unlock Unlimited Ideas
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Upgrade to Pro for full access to all ideas with detailed analysis, business viability reports, and keyword trends.
-                </p>
-                <span className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-medium text-sm group-hover:opacity-80 transition-opacity">
-                  Upgrade to Pro · $15/mo
+        <div className="space-y-12">
+          {/* Today's new ideas */}
+          {todayIdeas.length > 0 && (
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white uppercase tracking-wide">
+                  New Today
                 </span>
+                <h2 className="text-lg font-semibold text-foreground">Today&apos;s New Ideas</h2>
               </div>
-            </Link>
-          </div>
-        </>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {todayIdeas.map((idea) => (
+                  <IdeaCard
+                    key={idea.id}
+                    idea={idea}
+                    isPro={true}
+                    isBookmarked={bookmarkedIds.has(idea.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Recent ideas */}
+          {recentIdeas.length > 0 && (
+            <section>
+              <h2 className="text-lg font-semibold text-foreground mb-6">Recent Ideas</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {recentIdeas.map((idea) => (
+                  <IdeaCard
+                    key={idea.id}
+                    idea={idea}
+                    isPro={true}
+                    isBookmarked={bookmarkedIds.has(idea.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
       )}
     </main>
   )
