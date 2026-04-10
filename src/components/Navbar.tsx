@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Bookmark } from 'lucide-react'
 import LogoutButton from './LogoutButton'
 
@@ -18,22 +19,23 @@ export default async function Navbar() {
   }
 
   return (
-    <nav className="border-b border-border bg-card sticky top-0 z-50">
+    <nav className="sticky top-0 z-50 border-b border-white/10" style={{ backgroundColor: '#1a1a1a' }}>
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-foreground hover:opacity-80 transition-opacity">
-          Idealike
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Image src="/logo.png" alt="Idealike" width={36} height={36} className="rounded-lg" />
+          <span className="text-lg font-bold text-white">Idealike</span>
         </Link>
         <div className="flex items-center gap-3">
           {user ? (
             <>
               {isPro ? (
                 <>
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400">
                     Pro ✦
                   </span>
                   <Link
                     href="/bookmarks"
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors"
                   >
                     <Bookmark size={15} />
                     Saved
@@ -42,14 +44,14 @@ export default async function Navbar() {
               ) : (
                 <Link
                   href="/pricing"
-                  className="text-sm font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="text-sm font-medium px-3 py-1.5 rounded-lg bg-amber-500 text-white hover:bg-amber-400 transition-colors"
                 >
                   Upgrade to Pro
                 </Link>
               )}
               <Link
                 href="/profile"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-white/60 hover:text-white transition-colors"
               >
                 Profile
               </Link>
@@ -58,7 +60,7 @@ export default async function Navbar() {
           ) : (
             <Link
               href="/auth/login"
-              className="text-sm font-medium px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="text-sm font-medium px-4 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-400 transition-colors"
             >
               Sign In
             </Link>
