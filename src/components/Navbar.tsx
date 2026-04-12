@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Bookmark } from 'lucide-react'
 import LogoutButton from './LogoutButton'
+import ThemeToggle from './ThemeToggle'
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -26,6 +27,7 @@ export default async function Navbar() {
           <span className="text-lg font-bold text-white">Idealike</span>
         </Link>
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {user ? (
             <>
               {isPro ? (

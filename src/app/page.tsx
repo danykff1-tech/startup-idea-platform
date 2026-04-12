@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import IdeaCard from '@/components/IdeaCard'
+import IdeaGrid from '@/components/IdeaGrid'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
 
@@ -176,12 +177,10 @@ export default async function HomePage() {
     )
   }
 
-  /* ── Pro: today's new ideas + recent 9 ── */
+  /* ── Pro: today's new ideas + all recent ideas ── */
   const allIdeas = ideas ?? []
-  const todayIdeas = allIdeas.filter((i) =>
-    i.created_at.startsWith(today)
-  )
-  const recentIdeas = allIdeas.filter((i) => !i.created_at.startsWith(today)).slice(0, 9)
+  const todayIdeas = allIdeas.filter((i) => i.created_at.startsWith(today))
+  const recentIdeas = allIdeas.filter((i) => !i.created_at.startsWith(today))
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">
@@ -200,46 +199,12 @@ export default async function HomePage() {
           <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
         </div>
       ) : (
-        <div className="space-y-12">
-          {/* Today's new ideas */}
-          {todayIdeas.length > 0 && (
-            <section>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500 text-white uppercase tracking-wide">
-                  New Today
-                </span>
-                <h2 className="text-lg font-semibold text-foreground">Today&apos;s New Ideas</h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {todayIdeas.map((idea) => (
-                  <IdeaCard
-                    key={idea.id}
-                    idea={idea}
-                    isPro={true}
-                    isBookmarked={bookmarkedIds.has(idea.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* Recent ideas */}
-          {recentIdeas.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-6">Recent Ideas</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recentIdeas.map((idea) => (
-                  <IdeaCard
-                    key={idea.id}
-                    idea={idea}
-                    isPro={true}
-                    isBookmarked={bookmarkedIds.has(idea.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
+        <IdeaGrid
+          todayIdeas={todayIdeas}
+          recentIdeas={recentIdeas}
+          isPro={true}
+          bookmarkedIds={Array.from(bookmarkedIds)}
+        />
       )}
     </main>
   )
