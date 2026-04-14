@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Idealike – AI-Powered Business Idea Curation',
   description: 'Discover validated startup ideas curated and analyzed by AI every day.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({
