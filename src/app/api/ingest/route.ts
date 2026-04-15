@@ -29,6 +29,9 @@ export async function POST(req: NextRequest) {
     monetization_strategies,
     tech_stack_suggestions,
     tags,
+    competitive_edge,
+    why_now,
+    market_gap,
   } = body
 
   // 3. 필수 필드 확인
@@ -67,6 +70,9 @@ export async function POST(req: NextRequest) {
       monetization_strategies: monetization_strategies ?? [],
       tech_stack_suggestions: tech_stack_suggestions ?? [],
       tags: tags ?? [],
+      competitive_edge: competitive_edge ?? null,
+      why_now: why_now ?? null,
+      market_gap: market_gap ?? null,
       is_published: true,
     })
     .select('id')

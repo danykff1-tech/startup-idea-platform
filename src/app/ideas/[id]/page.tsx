@@ -29,47 +29,53 @@ function hashCode(str: string): number {
   return Math.abs(hash) || 1
 }
 
-/* ── Generate deterministic "search interest" from a keyword string ── */
-function keywordInterest(keyword: string, base: number): number {
-  let h = 0
-  for (let i = 0; i < keyword.length; i++) {
-    h = ((h << 5) - h) + keyword.charCodeAt(i)
-    h |= 0
-  }
-  return Math.min(100, Math.max(20, (Math.abs(h) % 60) + base * 0.4))
-}
-
-/* ── Compute viability metrics from idea data ── */
-function computeViability(idea: {
-  ai_score: number | null
-  pain_points: string[]
-  target_customers: string[]
-  monetization_strategies: string[]
-  tech_stack_suggestions: string[]
+/* ── Simple metric pill ── */
+function MetricPill({
+  label,
+  value,
+}: {
+  label: string
+  value: number | null
 }) {
-  const opportunity = idea.ai_score ?? 50
-  const problemSeverity = Math.min(100, (idea.pain_points?.length ?? 0) * 28 + 15)
-  const marketSize = Math.min(100, (idea.target_customers?.length ?? 0) * 30 + 10)
-  const revenuePotential = Math.min(100, (idea.monetization_strategies?.length ?? 0) * 28 + 15)
-  const feasibility = Math.min(100, 95 - (idea.tech_stack_suggestions?.length ?? 0) * 8)
-  return { opportunity, problemSeverity, marketSize, revenuePotential, feasibility }
+  const score = value ?? 50
+  const level = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low'
+  const colors =
+    level === 'High'
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+      : level === 'Medium'
+      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+
+  return (
+    <div className="flex flex-col gap-1 min-w-[90px]">
+      <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
+      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full w-fit ${colors}`}>
+        {level}
+      </span>
+    </div>
+  )
 }
 
-function ViabilityBar({ label, value, color }: { label: string; value: number; color: string }) {
-  const level = value >= 75 ? 'High' : value >= 45 ? 'Medium' : 'Low'
+/* ── Prose section with icon ── */
+function AnalysisSection({
+  icon,
+  title,
+  children,
+}: {
+  icon: string
+  title: string
+  children: React.ReactNode
+}) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-zinc-600 dark:text-zinc-300">{label}</span>
-        <span className="text-xs font-medium text-zinc-400">{level} ({value})</span>
+    <section>
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-base">{icon}</span>
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
       </div>
-      <div className="h-2.5 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
-        <div
-          className={`h-full rounded-full ${color} transition-all`}
-          style={{ width: `${value}%` }}
-        />
+      <div className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed pl-6">
+        {children}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -106,7 +112,6 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     const isDailyIdea = dailyIds.has(id)
 
     if (!isDailyIdea) {
-      /* ── Not a daily idea → apply view limit ── */
       const { data: viewData } = await supabase
         .from('daily_view_tracking')
         .select('view_count')
@@ -156,7 +161,12 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     notFound()
   }
 
-  /* ── Bookmark state for Pro users ── */
+  /* ── Mark idea as seen ── */
+  await supabase
+    .from('user_seen_ideas')
+    .upsert({ user_id: user.id, idea_id: id }, { onConflict: 'user_id,idea_id' })
+
+  /* ── Bookmark state ── */
   let isBookmarked = false
   if (isPro) {
     const { data: bm } = await supabase
@@ -168,38 +178,38 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     isBookmarked = !!bm
   }
 
-  const viability = computeViability(idea)
+  /* ── Derived viability signals (simple scores, no bars) ── */
+  const opportunity = idea.ai_score ?? 50
+  const problemSeverity = Math.min(100, (idea.pain_points?.length ?? 0) * 28 + 15)
+  const marketSize = Math.min(100, (idea.target_customers?.length ?? 0) * 30 + 10)
+  const revenuePotential = Math.min(100, (idea.monetization_strategies?.length ?? 0) * 28 + 15)
+  const feasibility = Math.min(100, 95 - (idea.tech_stack_suggestions?.length ?? 0) * 8)
   const overallScore = Math.round(
-    (viability.opportunity + viability.problemSeverity + viability.marketSize +
-     viability.revenuePotential + viability.feasibility) / 5
+    (opportunity + problemSeverity + marketSize + revenuePotential + feasibility) / 5
   )
 
-  const keywords = [
-    ...(idea.tags ?? []).slice(0, 4),
-    ...(idea.target_customers ?? []).slice(0, 2),
-  ]
-
   return (
-    <main className="max-w-3xl mx-auto px-4 py-12">
+    <main className="max-w-2xl mx-auto px-4 py-12">
+      {/* ── Back ── */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground transition-colors mb-8"
+        className="inline-flex items-center gap-1 text-sm text-zinc-500 dark:text-zinc-400 hover:text-foreground transition-colors mb-10"
       >
         ← Back to Ideas
       </Link>
 
-      {/* ── Header ── */}
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap">
+      {/* ── Tags + Score + Bookmark ── */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
           {idea.ai_score != null && (
-            <span className="text-sm px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 font-medium">
               ✦ AI Score {idea.ai_score}/100
             </span>
           )}
           {idea.tags?.slice(0, 3).map((tag: string) => (
             <span
               key={tag}
-              className="text-sm px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
+              className="text-xs px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
             >
               {tag}
             </span>
@@ -212,129 +222,145 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         />
       </div>
 
+      {/* ── Title ── */}
       <h1 className="text-3xl font-bold text-foreground mb-4 leading-snug">
         {idea.title}
       </h1>
-      <p className="text-lg text-zinc-600 dark:text-zinc-300 mb-10 leading-relaxed">
+
+      {/* ── Summary ── */}
+      <p className="text-base text-zinc-600 dark:text-zinc-300 leading-relaxed mb-8">
         {idea.summary}
       </p>
 
-      <div className="space-y-10">
-        {/* ── Business Viability Assessment ── */}
-        <section className="rounded-2xl border border-border bg-card p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-foreground">Business Viability Assessment</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Overall</span>
-              <span className={`text-2xl font-bold ${
-                overallScore >= 70 ? 'text-green-500' :
-                overallScore >= 45 ? 'text-amber-500' : 'text-red-500'
-              }`}>
-                {overallScore}
-              </span>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <ViabilityBar label="Opportunity" value={viability.opportunity} color="bg-blue-500" />
-            <ViabilityBar label="Problem Severity" value={viability.problemSeverity} color="bg-red-500" />
-            <ViabilityBar label="Market Size" value={viability.marketSize} color="bg-green-500" />
-            <ViabilityBar label="Revenue Potential" value={viability.revenuePotential} color="bg-amber-500" />
-            <ViabilityBar label="Feasibility" value={viability.feasibility} color="bg-purple-500" />
-          </div>
-        </section>
+      {/* ── Viability snapshot (pills only, no bars) ── */}
+      <div className="rounded-2xl border border-border bg-card p-5 mb-10">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-semibold text-foreground">Viability Snapshot</span>
+          <span className={`text-xl font-bold ${
+            overallScore >= 70 ? 'text-emerald-500' :
+            overallScore >= 45 ? 'text-amber-500' : 'text-red-500'
+          }`}>
+            {overallScore}<span className="text-sm font-normal text-zinc-400">/100</span>
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-x-6 gap-y-3">
+          <MetricPill label="Opportunity" value={opportunity} />
+          <MetricPill label="Problem Severity" value={problemSeverity} />
+          <MetricPill label="Market Size" value={marketSize} />
+          <MetricPill label="Revenue Potential" value={revenuePotential} />
+          <MetricPill label="Feasibility" value={feasibility} />
+        </div>
+      </div>
 
-        {/* ── Keyword Search Interest ── */}
-        {keywords.length > 0 && (
-          <section className="rounded-2xl border border-border bg-card p-6">
-            <h2 className="text-xl font-bold text-foreground mb-6">Keyword Search Interest</h2>
-            <div className="space-y-3">
-              {keywords.map((kw: string) => {
-                const interest = Math.round(keywordInterest(kw, idea.ai_score ?? 50))
-                return (
-                  <div key={kw} className="flex items-center gap-4">
-                    <span className="text-sm text-zinc-600 dark:text-zinc-300 w-40 shrink-0 truncate">{kw}</span>
-                    <div className="flex-1 h-6 rounded bg-zinc-200 dark:bg-zinc-800 overflow-hidden relative">
-                      <div
-                        className="h-full rounded bg-gradient-to-r from-blue-500 to-cyan-400"
-                        style={{ width: `${interest}%` }}
-                      />
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                        {interest}
-                      </span>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground mt-4">
-              * Estimated relative search interest based on AI analysis (0–100 scale)
-            </p>
-          </section>
+      {/* ── Deep-dive analysis sections ── */}
+      <div className="space-y-8">
+
+        {/* Competitive Edge */}
+        {idea.competitive_edge && (
+          <AnalysisSection icon="⚔️" title="Competitive Edge">
+            {idea.competitive_edge}
+          </AnalysisSection>
         )}
 
-        {/* ── Problem Analysis ── */}
+        {/* Why Now */}
+        {idea.why_now && (
+          <AnalysisSection icon="⏱️" title="Why Now?">
+            {idea.why_now}
+          </AnalysisSection>
+        )}
+
+        {/* Market Gap */}
+        {idea.market_gap && (
+          <AnalysisSection icon="🔍" title="Market Gap">
+            {idea.market_gap}
+          </AnalysisSection>
+        )}
+
+        {/* Divider */}
+        {(idea.competitive_edge || idea.why_now || idea.market_gap) &&
+          (idea.pain_points?.length > 0 || idea.target_customers?.length > 0) && (
+          <hr className="border-border" />
+        )}
+
+        {/* Problems solved */}
         {idea.pain_points?.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">Problems This Idea Solves</h2>
-            <ul className="space-y-2">
+          <AnalysisSection icon="!" title="Problems This Solves">
+            <ul className="space-y-2 mt-1">
               {idea.pain_points.map((point: string, i: number) => (
-                <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-red-400 shrink-0 mt-0.5">!</span>
+                <li key={i} className="flex gap-2">
+                  <span className="text-red-400 shrink-0">•</span>
                   {point}
                 </li>
               ))}
             </ul>
-          </section>
+          </AnalysisSection>
         )}
 
-        {/* ── Target Market ── */}
+        {/* Target customers */}
         {idea.target_customers?.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">Target Customers</h2>
-            <ul className="space-y-2">
+          <AnalysisSection icon="👥" title="Who It's For">
+            <ul className="space-y-2 mt-1">
               {idea.target_customers.map((customer: string, i: number) => (
-                <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-blue-400 shrink-0 mt-0.5">→</span>
+                <li key={i} className="flex gap-2">
+                  <span className="text-blue-400 shrink-0">→</span>
                   {customer}
                 </li>
               ))}
             </ul>
-          </section>
+          </AnalysisSection>
         )}
 
-        {/* ── Revenue Model ── */}
+        {/* Monetization */}
         {idea.monetization_strategies?.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">Monetization Strategies</h2>
-            <ul className="space-y-2">
+          <AnalysisSection icon="💰" title="How to Make Money">
+            <ul className="space-y-2 mt-1">
               {idea.monetization_strategies.map((strategy: string, i: number) => (
-                <li key={i} className="flex gap-3 text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed">
-                  <span className="text-green-400 shrink-0 mt-0.5">$</span>
+                <li key={i} className="flex gap-2">
+                  <span className="text-emerald-400 shrink-0">$</span>
                   {strategy}
                 </li>
               ))}
             </ul>
-          </section>
+          </AnalysisSection>
         )}
 
-        {/* ── Tech Stack ── */}
+        {/* Tech stack */}
         {idea.tech_stack_suggestions?.length > 0 && (
-          <section>
-            <h2 className="text-lg font-semibold mb-3">Suggested Tech Stack</h2>
-            <div className="flex flex-wrap gap-2">
+          <AnalysisSection icon="🛠️" title="Tech Stack">
+            <div className="flex flex-wrap gap-2 mt-1">
               {idea.tech_stack_suggestions.map((tech: string, i: number) => (
                 <span
                   key={i}
-                  className="px-3 py-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-sm"
+                  className="px-3 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium"
                 >
                   {tech}
                 </span>
               ))}
             </div>
-          </section>
+          </AnalysisSection>
         )}
 
-        {/* ── Pro Upgrade CTA ── */}
+        {/* Source */}
+        {idea.source_platform && (
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 pt-2">
+            Source: {idea.source_platform}
+            {idea.source_url && (
+              <>
+                {' · '}
+                <a
+                  href={idea.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                >
+                  View original
+                </a>
+              </>
+            )}
+          </p>
+        )}
+
+        {/* ── Pro upgrade CTA (free users only) ── */}
         {!isPro && (
           <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-rose-500/5 p-6 text-center">
             <p className="text-sm text-muted-foreground mb-3">

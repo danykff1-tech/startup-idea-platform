@@ -63,7 +63,7 @@ export default async function HomePage() {
     .select('id, title, summary, tags, source_platform, ai_score, created_at')
     .eq('is_published', true)
     .order('created_at', { ascending: false })
-    .limit(30)
+    .limit(100)
 
   /* ── Guest: show 1 preview card + 2 locked ── */
   if (!user) {
@@ -113,7 +113,7 @@ export default async function HomePage() {
     )
   }
 
-  /* ── Logged in → fetch Pro status + bookmarks ── */
+  /* ── Logged in → fetch Pro status + bookmarks + seen ideas ── */
   const { data: profile } = await supabase
     .from('users')
     .select('is_pro')
@@ -126,9 +126,20 @@ export default async function HomePage() {
     : { data: [] }
   const bookmarkedIds = new Set((bookmarkRows ?? []).map((b: { idea_id: string }) => b.idea_id))
 
-  /* ── Free: 3 random ideas ── */
+  const { data: seenRows } = await supabase
+    .from('user_seen_ideas')
+    .select('idea_id')
+    .eq('user_id', user.id)
+  const seenIds = new Set((seenRows ?? []).map((r: { idea_id: string }) => r.idea_id))
+
+  const allIdeasList = ideas ?? []
+  const unseenIdeas = allIdeasList.filter((i) => !seenIds.has(i.id))
+  const seenIdeasList = allIdeasList.filter((i) => seenIds.has(i.id))
+
+  /* ── Free: 3 random unseen ideas ── */
   const seed = hashCode(user.id + today)
-  const shuffled = ideas ? seededShuffle(ideas, seed) : []
+  const pool = unseenIdeas.length >= 3 ? unseenIdeas : allIdeasList
+  const shuffled = seededShuffle(pool, seed)
 
   if (!isPro) {
     const displayed = shuffled.slice(0, 3)
@@ -177,10 +188,9 @@ export default async function HomePage() {
     )
   }
 
-  /* ── Pro: today's new ideas + all recent ideas ── */
-  const allIdeas = ideas ?? []
-  const todayIdeas = allIdeas.filter((i) => i.created_at.startsWith(today))
-  const recentIdeas = allIdeas.filter((i) => !i.created_at.startsWith(today))
+  /* ── Pro: unseen ideas first, then seen ── */
+  const todayIdeas = unseenIdeas.filter((i) => i.created_at.startsWith(today))
+  const recentIdeas = unseenIdeas.filter((i) => !i.created_at.startsWith(today))
 
   return (
     <main className="max-w-6xl mx-auto px-4 py-12">
@@ -193,7 +203,7 @@ export default async function HomePage() {
         </p>
       </div>
 
-      {allIdeas.length === 0 ? (
+      {allIdeasList.length === 0 ? (
         <div className="text-center py-24">
           <div className="text-5xl mb-4">✦</div>
           <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
