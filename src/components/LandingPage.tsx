@@ -17,7 +17,6 @@ interface Props {
   previewIdea: Idea | null
 }
 
-/* ── Locked placeholder card ── */
 function LockedCard() {
   return (
     <Link href="/auth/login" className="block h-full">
@@ -44,25 +43,23 @@ function LockedCard() {
 export default function LandingPage({ previewIdea }: Props) {
   return (
     <>
-      {/* ═══════════════════════════════════════════
-          HERO
-          ═══════════════════════════════════════════ */}
+      {/* ── HERO ── */}
       <section className="max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-6">
           <Sparkles size={12} className="text-amber-500" />
-          AI가 매일 검증하는 사업 아이디어
+          AI-curated startup ideas, delivered daily
         </div>
 
         <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight">
-          스타트업 아이디어를
+          Startup ideas, refined
           <br />
-          자동 정제, 바로 검토하세요
+          by AI. Ready to review.
         </h1>
 
         <p className="text-lg text-zinc-600 dark:text-zinc-300 max-w-2xl mx-auto mb-8 leading-relaxed">
-          인터넷 곳곳의 아이디어를 크롤링하여 중복 제거하고 수요 신호로 점수화합니다.
+          We crawl the internet for startup ideas, remove duplicates, and score them by demand signals.
           <br className="hidden sm:block" />
-          창업 리서치에 쓰는 시간을 절반으로 줄이세요.
+          Spend less time on research. More time on building.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-10">
@@ -70,17 +67,16 @@ export default function LandingPage({ previewIdea }: Props) {
             href="/auth/login"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-foreground text-background font-semibold text-sm hover:opacity-85 transition-opacity"
           >
-            무료로 시작하기 →
+            Get started free →
           </Link>
           <a
             href="#subscribe"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border border-border bg-card text-foreground font-medium text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
           >
-            주간 리포트 받기
+            Get weekly digest
           </a>
         </div>
 
-        {/* Hero preview (1 real + 2 locked) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12">
           {previewIdea && <IdeaCard idea={previewIdea} />}
           <LockedCard />
@@ -88,9 +84,7 @@ export default function LandingPage({ previewIdea }: Props) {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          PROBLEM
-          ═══════════════════════════════════════════ */}
+      {/* ── PROBLEM ── */}
       <section className="border-t border-border bg-zinc-50 dark:bg-zinc-900/40">
         <div className="max-w-5xl mx-auto px-4 py-20">
           <div className="text-center mb-14">
@@ -98,7 +92,7 @@ export default function LandingPage({ previewIdea }: Props) {
               Problem
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              아이디어 찾기는 왜 이렇게 어려울까요?
+              Finding good ideas is painful
             </h2>
           </div>
 
@@ -106,40 +100,33 @@ export default function LandingPage({ previewIdea }: Props) {
             {[
               {
                 icon: <Shuffle size={22} />,
-                title: '흩어져 있음',
-                desc: 'Reddit, HN, Product Hunt, Indie Hackers… 하루 종일 탭을 넘나들어도 전체 그림이 안 보입니다.',
+                title: 'Scattered everywhere',
+                desc: 'Reddit, HN, Product Hunt, Indie Hackers… You spend hours tab-switching without seeing the full picture.',
               },
               {
                 icon: <TrendingUp size={22} />,
-                title: '중복이 너무 많음',
-                desc: '같은 아이디어가 여러 플랫폼에 반복 등장합니다. 진짜 새로운 것을 골라내기 어렵습니다.',
+                title: 'Too much duplication',
+                desc: 'The same idea shows up across multiple platforms. Picking out what\'s genuinely new is exhausting.',
               },
               {
                 icon: <Search size={22} />,
-                title: '검증이 안 됨',
-                desc: '수요가 있는지, 이미 유사 제품이 있는지, 누가 돈을 낼지 직접 조사해야 합니다.',
+                title: 'Hard to validate',
+                desc: 'Is there real demand? Are there existing competitors? Who will pay? You have to research everything yourself.',
               },
             ].map((p) => (
-              <div
-                key={p.title}
-                className="rounded-2xl border border-border bg-card p-6"
-              >
+              <div key={p.title} className="rounded-2xl border border-border bg-card p-6">
                 <div className="w-11 h-11 rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
                   {p.icon}
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">{p.title}</h3>
-                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {p.desc}
-                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{p.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          SOLUTION FLOW
-          ═══════════════════════════════════════════ */}
+      {/* ── SOLUTION ── */}
       <section className="border-t border-border">
         <div className="max-w-5xl mx-auto px-4 py-20">
           <div className="text-center mb-14">
@@ -147,27 +134,25 @@ export default function LandingPage({ previewIdea }: Props) {
               Solution
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              idealike가 대신 해드립니다
+              idealike does it for you
             </h2>
             <p className="text-zinc-600 dark:text-zinc-300 max-w-2xl mx-auto">
-              수집부터 점수화까지 전 과정을 자동화해, 당신은 검토와 실행에만 집중하세요.
+              The entire pipeline — collection to scoring — is automated. You just review and act.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 relative">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {[
-              { step: '01', title: '크롤링', desc: 'HN, Product Hunt, Indie Hackers 등에서 매일 수집' },
-              { step: '02', title: '정제', desc: 'GPT-4o가 핵심 아이디어만 추출하고 구조화' },
-              { step: '03', title: '분류', desc: 'SaaS · AI · DevTools 등 카테고리로 자동 태깅' },
-              { step: '04', title: '점수화', desc: '수요 신호와 시장성으로 AI Score 산정' },
+              { step: '01', title: 'Crawl', desc: 'Collects ideas daily from HN, Product Hunt, Indie Hackers and more.' },
+              { step: '02', title: 'Refine', desc: 'GPT-4o extracts and structures the core business idea from raw posts.' },
+              { step: '03', title: 'Tag', desc: 'Auto-categorized into SaaS, AI, DevTools, FinTech and 12 more tags.' },
+              { step: '04', title: 'Score', desc: 'Demand signals and market potential are combined into an AI Score (0–100).' },
             ].map((s, i) => (
               <div key={s.step} className="relative">
                 <div className="rounded-2xl border border-border bg-card p-6 h-full">
                   <div className="text-xs font-mono text-blue-500 mb-3">{s.step}</div>
                   <h3 className="font-semibold text-foreground mb-2">{s.title}</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                    {s.desc}
-                  </p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{s.desc}</p>
                 </div>
                 {i < 3 && (
                   <div className="hidden md:block absolute top-1/2 -right-2 -translate-y-1/2 text-zinc-300 dark:text-zinc-700 z-10">
@@ -180,9 +165,7 @@ export default function LandingPage({ previewIdea }: Props) {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          FEATURES
-          ═══════════════════════════════════════════ */}
+      {/* ── FEATURES ── */}
       <section className="border-t border-border bg-zinc-50 dark:bg-zinc-900/40">
         <div className="max-w-5xl mx-auto px-4 py-20">
           <div className="text-center mb-14">
@@ -190,7 +173,7 @@ export default function LandingPage({ previewIdea }: Props) {
               Features
             </p>
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              창업자에게 꼭 필요한 4가지
+              Everything founders actually need
             </h2>
           </div>
 
@@ -198,41 +181,36 @@ export default function LandingPage({ previewIdea }: Props) {
             {[
               {
                 icon: <Shuffle size={20} />,
-                title: '중복 제거',
-                desc: '여러 플랫폼에 걸친 동일 아이디어를 URL·제목 기반으로 자동 병합합니다.',
+                title: 'Deduplication',
+                desc: 'Same ideas appearing across multiple platforms are automatically merged by URL and title.',
                 color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30',
               },
               {
                 icon: <TrendingUp size={20} />,
-                title: '트렌드 점수',
-                desc: '조회수, 추천수, 검색량 시그널을 종합해 0~100점의 AI Score로 환산합니다.',
+                title: 'Trend Score',
+                desc: 'Upvotes, views, and search signals are combined into a 0–100 AI Score for every idea.',
                 color: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30',
               },
               {
                 icon: <Filter size={20} />,
-                title: '카테고리 필터',
-                desc: 'SaaS, AI, DevTools, FinTech 등 16개 태그로 관심 분야만 빠르게 탐색.',
+                title: 'Category Filter',
+                desc: 'Browse by SaaS, AI, DevTools, FinTech and 12 other tags to find what fits your skillset.',
                 color: 'text-emerald-500 bg-emerald-100 dark:bg-emerald-900/30',
               },
               {
                 icon: <Bell size={20} />,
-                title: '저장 & 알림',
-                desc: '북마크하고 매일 이메일로 정제된 아이디어를 받아보세요. 놓치지 않습니다.',
+                title: 'Save & Alerts',
+                desc: 'Bookmark ideas and get one fresh idea emailed to you every morning. Never miss a good one.',
                 color: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30',
               },
             ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-border bg-card p-6 flex gap-4 items-start"
-              >
+              <div key={f.title} className="rounded-2xl border border-border bg-card p-6 flex gap-4 items-start">
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${f.color}`}>
                   {f.icon}
                 </div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-1.5">{f.title}</h3>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                    {f.desc}
-                  </p>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{f.desc}</p>
                 </div>
               </div>
             ))}
@@ -240,97 +218,84 @@ export default function LandingPage({ previewIdea }: Props) {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          EMAIL SUBSCRIBE
-          ═══════════════════════════════════════════ */}
+      {/* ── EMAIL SUBSCRIBE ── */}
       <section id="subscribe" className="border-t border-border">
         <div className="max-w-3xl mx-auto px-4 py-24 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-xs font-medium text-amber-700 dark:text-amber-400 mb-6">
             <BookmarkIcon size={12} />
-            매일 아이디어 이메일
+            One idea a day
           </div>
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            하루 하나, AI가 고른 아이디어
+            Get one AI-picked idea every morning
           </h2>
           <p className="text-zinc-600 dark:text-zinc-300 mb-8 leading-relaxed">
-            구독하면 매일 아침 가장 흥미로운 아이디어 한 건을 이메일로 보내드립니다.
+            Subscribe and we&apos;ll send you the most interesting idea of the day — straight to your inbox.
             <br />
-            같은 아이디어는 두 번 보내지 않습니다.
+            No repeats. Ever.
           </p>
 
           <SubscribeForm />
 
           <p className="text-xs text-muted-foreground mt-4">
-            언제든 구독 취소 가능 · 스팸 없음
+            Unsubscribe anytime · No spam
           </p>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          FAQ
-          ═══════════════════════════════════════════ */}
+      {/* ── FAQ ── */}
       <section className="border-t border-border bg-zinc-50 dark:bg-zinc-900/40">
         <div className="max-w-3xl mx-auto px-4 py-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              자주 묻는 질문
+              Frequently asked questions
             </h2>
           </div>
 
           <div className="space-y-3">
             {[
               {
-                q: '어떤 데이터를 사용하나요?',
-                a: 'Hacker News, Product Hunt, Indie Hackers의 공개 피드와 RSS를 수집합니다. GPT-4o로 정제한 뒤 원본 URL을 항상 함께 제공하므로 직접 검증할 수 있습니다.',
+                q: 'Where does the data come from?',
+                a: 'We collect from public feeds on Hacker News, Product Hunt, and Indie Hackers. Every idea includes the original URL so you can verify the source yourself.',
               },
               {
-                q: '무료 플랜에서는 무엇을 할 수 있나요?',
-                a: '매일 AI가 골라주는 3개의 아이디어를 제한 없이 열람할 수 있습니다. 그 외 추가 아이디어는 하루 3건까지 무료 분석이 가능합니다.',
+                q: 'What can I do on the free plan?',
+                a: 'Free users get 3 AI-curated ideas per day. You can read full analysis for each — no credit card required.',
               },
               {
-                q: '결제는 어떻게 되나요?',
-                a: 'Pro 플랜은 월 $15이며 LemonSqueezy로 안전하게 결제됩니다. 언제든 취소할 수 있고, 기존 결제일까지 계속 이용 가능합니다.',
+                q: 'How does billing work?',
+                a: 'Pro is $15/month, billed via LemonSqueezy. Cancel any time and you keep access until the end of your billing period.',
               },
               {
-                q: '보안은 어떻게 관리하나요?',
-                a: '모든 통신은 HTTPS로 암호화되며, 인증은 Supabase OAuth(Google)로 처리됩니다. 결제 정보는 LemonSqueezy에서만 관리하고 저희 서버에는 저장되지 않습니다.',
+                q: 'How is my data handled?',
+                a: 'All traffic is encrypted over HTTPS. Authentication uses Google OAuth via Supabase. Payment info is handled entirely by LemonSqueezy — we never store card details.',
               },
             ].map((item) => (
-              <details
-                key={item.q}
-                className="group rounded-xl border border-border bg-card p-5 cursor-pointer"
-              >
+              <details key={item.q} className="group rounded-xl border border-border bg-card p-5 cursor-pointer">
                 <summary className="flex items-center justify-between font-medium text-foreground list-none">
                   <span>{item.q}</span>
-                  <span className="text-zinc-400 group-open:rotate-45 transition-transform text-xl leading-none">
-                    +
-                  </span>
+                  <span className="text-zinc-400 group-open:rotate-45 transition-transform text-xl leading-none">+</span>
                 </summary>
-                <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
-                  {item.a}
-                </p>
+                <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{item.a}</p>
               </details>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════════
-          FINAL CTA
-          ═══════════════════════════════════════════ */}
+      {/* ── FINAL CTA ── */}
       <section className="border-t border-border">
         <div className="max-w-3xl mx-auto px-4 py-24 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            지금 시작하세요
+            Start for free today
           </h2>
           <p className="text-zinc-600 dark:text-zinc-300 mb-8">
-            무료 계정으로 매일 3개의 정제된 아이디어를 받아볼 수 있습니다.
+            3 curated ideas a day, no credit card required.
           </p>
           <Link
             href="/auth/login"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl bg-foreground text-background font-semibold text-sm hover:opacity-85 transition-opacity"
           >
-            무료로 시작하기 →
+            Get started free →
           </Link>
         </div>
       </section>
