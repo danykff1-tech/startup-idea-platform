@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   } = body
 
   // 3. 필수 필드 확인
-  if (!title || !summary || !source_platform || !source_url) {
+  if (!title || !summary || !source_url) {
     return NextResponse.json({ error: '필수 필드 누락' }, { status: 400 })
   }
 
