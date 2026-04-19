@@ -24,16 +24,16 @@ export default function SubscribeForm() {
 
       if (!res.ok) {
         setStatus('error')
-        setMessage(data.error ?? '구독에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        setMessage(data.error ?? 'Something went wrong. Please try again.')
         return
       }
 
       setStatus('success')
-      setMessage(data.already ? '이미 구독 중입니다 ✓' : '구독 완료! 내일부터 이메일이 도착합니다 ✓')
+      setMessage(data.already ? 'Already subscribed ✓' : 'Subscribed! Your first idea arrives tomorrow ✓')
       setEmail('')
     } catch {
       setStatus('error')
-      setMessage('네트워크 오류가 발생했습니다.')
+      setMessage('Network error. Please try again.')
     }
   }
 
@@ -50,7 +50,7 @@ export default function SubscribeForm() {
         id="subscribe-email"
         type="email"
         required
-        placeholder="you@example.com"
+        placeholder="your@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         disabled={status === 'loading'}
@@ -61,7 +61,7 @@ export default function SubscribeForm() {
         disabled={status === 'loading' || !email}
         className="px-6 py-3 rounded-xl bg-foreground text-background font-semibold text-sm hover:opacity-85 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
       >
-        {status === 'loading' ? '처리 중...' : '받기'}
+        {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
       </button>
 
       {message && (
