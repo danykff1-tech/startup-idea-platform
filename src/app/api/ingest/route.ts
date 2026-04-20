@@ -32,6 +32,10 @@ export async function POST(req: NextRequest) {
     competitive_edge,
     why_now,
     market_gap,
+    ranking_score,
+    is_pro_pick,
+    upvotes,
+    comment_count,
   } = body
 
   // 3. 필수 필드 확인
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
     .insert({
       title,
       summary,
-      source_platform,
+      source_platform: source_platform ?? null,
       source_url,
       ai_score: ai_score ?? 50,
       pain_points: pain_points ?? [],
@@ -73,6 +77,10 @@ export async function POST(req: NextRequest) {
       competitive_edge: competitive_edge ?? null,
       why_now: why_now ?? null,
       market_gap: market_gap ?? null,
+      ranking_score: ranking_score ?? 0,
+      is_pro_pick: is_pro_pick ?? false,
+      upvotes: upvotes ?? 0,
+      comment_count: comment_count ?? 0,
       is_published: true,
     })
     .select('id')
