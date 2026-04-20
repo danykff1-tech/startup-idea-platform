@@ -1,0 +1,315 @@
+{
+  "name": "Idealike – Idea Pipeline v2 (Claude 3.5 Sonnet)",
+  "nodes": [
+    {
+      "id": "node-schedule",
+      "name": "Daily Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-hn-fetch",
+      "name": "HN Algolia – Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 160],
+      "parameters": {
+        "method": "GET",
+        "url": "https://hn.algolia.com/api/v1/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "query",          "value": "startup idea app tool saas build" },
+            { "name": "tags",           "value": "story" },
+            { "name": "numericFilters", "value": "points>10" },
+            { "name": "hitsPerPage",    "value": "40" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "node-hn-parse",
+      "name": "Parse HN Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 160],
+      "parameters": {
+        "jsCode": "const hits = $json.hits || [];\nconst IDEA_SIGNALS = /\\b(app|tool|platform|api|saas|marketplace|service|software|product|automat|dashboard|monitor|analytic|generat|assist|integrat|workflow|schedule|track|manage|build|launch)\\b/i;\nconst REJECT = /\\b(news|article|book|podcast|video|tweet|thread|death|disaster|war|politic|sport|music|movie|game|photo|opinion)\\b/i;\n\nconst results = [];\nfor (const hit of hits) {\n  const text = (hit.title || '') + ' ' + (hit.story_text || '');\n  if (!IDEA_SIGNALS.test(text) || REJECT.test(text)) continue;\n  if ((hit.points || 0) < 10) continue;\n  if ((hit.title || '').length < 20) continue;\n  results.push({\n    raw_title: hit.title,\n    raw_content: (hit.title + '. ' + (hit.story_text || '')).substring(0, 800),\n    source_url: hit.url || ('https://news.ycombinator.com/item?id=' + hit.objectID),\n    source_platform: 'hackernews',\n    upvotes: hit.points || 0,\n    comment_count: hit.num_comments || 0,\n    scraped_at: new Date().toISOString()\n  });\n}\n\nif (results.length === 0) return [{ json: { _skip: true } }];\nreturn results.map(r => ({ json: r }));"
+      }
+    },
+    {
+      "id": "node-ph-fetch",
+      "name": "Product Hunt – Fetch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 440],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.producthunt.com/feed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent", "value": "Mozilla/5.0 (compatible; idealike-bot/1.0; +https://idealike.xyz)" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "node-ph-parse",
+      "name": "Parse PH Items",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 440],
+      "parameters": {
+        "jsCode": "const xml = $json.data || '';\nconst items = [];\nconst itemRegex = /<item>([\\s\\S]*?)<\\/item>/g;\nlet match;\nwhile ((match = itemRegex.exec(xml)) !== null) {\n  const seg = match[1];\n  const getTag = function(tag) {\n    const r = new RegExp('<' + tag + '>(?:<!\\\\[CDATA\\\\[)?([\\\\s\\\\S]*?)(?:\\\\]\\\\]>)?<\\/' + tag + '>');\n    const m = r.exec(seg);\n    return m ? m[1].trim() : '';\n  };\n  const title = getTag('title');\n  const desc = getTag('description').replace(/<[^>]+>/g, '').substring(0, 600);\n  const link = getTag('link');\n  if (!title || !link || title.length < 15) continue;\n  items.push({\n    raw_title: title,\n    raw_content: (title + '. ' + desc).substring(0, 800),\n    source_url: link,\n    source_platform: 'producthunt',\n    upvotes: 0,\n    comment_count: 0,\n    scraped_at: new Date().toISOString()\n  });\n}\nif (items.length === 0) return [{ json: { _skip: true } }];\nreturn items.map(i => ({ json: i }));"
+      }
+    },
+    {
+      "id": "node-merge",
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [960, 300],
+      "parameters": {
+        "mode": "append"
+      }
+    },
+    {
+      "id": "node-prefilter",
+      "name": "Pre-filter & Dedup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const IDEA_SIGNALS = /\\b(app|tool|platform|api|saas|marketplace|service|software|product|automat|dashboard|monitor|analytic|generat|assist|integrat|workflow|schedule|track|manage)\\b/i;\nconst REJECT = /\\b(opinion|showhn|ask hn|news|blog|article|tutorial|course|book|podcast|video|thread|death|disaster|war|politic|sport|music|movie|game|photo)\\b/i;\n\nconst seen = new Set();\nconst filtered = [];\n\nfor (const item of $input.all()) {\n  const d = item.json;\n  if (d._skip) continue;\n  if (!d.source_url) continue;\n  if (seen.has(d.source_url)) continue;\n  seen.add(d.source_url);\n  const text = (d.raw_title || '') + ' ' + (d.raw_content || '');\n  if (!IDEA_SIGNALS.test(text)) continue;\n  if (REJECT.test(text)) continue;\n  if ((d.raw_title || '').length < 20) continue;\n  filtered.push(item);\n}\n\nif (filtered.length === 0) return [{ json: { _skip: true } }];\nreturn filtered;"
+      }
+    },
+    {
+      "id": "node-skip-check-1",
+      "name": "Skip Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1440, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "cond-skip",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-split",
+      "name": "Split In Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1680, 200],
+      "parameters": {
+        "batchSize": 3,
+        "options": {}
+      }
+    },
+    {
+      "id": "node-claude",
+      "name": "Claude Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 200],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",          "value": "={{ $vars.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version",   "value": "2023-06-01" },
+            { "name": "Content-Type",        "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ model: 'claude-3-5-sonnet-20241022', max_tokens: 1200, system: $vars.CLAUDE_SYSTEM_PROMPT, messages: [{ role: 'user', content: 'Title: ' + $json.raw_title + '\\n\\nContent: ' + $json.raw_content + '\\n\\nPlatform: ' + $json.source_platform + '\\nUpvotes: ' + ($json.upvotes || 0) }] }) }}",
+        "options": {
+          "timeout": 40000,
+          "retry": { "enabled": true, "maxTries": 3, "waitBetweenTries": 6000 }
+        }
+      }
+    },
+    {
+      "id": "node-parse-claude",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 200],
+      "parameters": {
+        "jsCode": "const claudeResp = $json;\nconst orig = $('Split In Batches').item.json;\n\nlet text = '';\ntry {\n  text = claudeResp.content[0].text;\n} catch(e) {\n  console.log('Claude resp error:', JSON.stringify(claudeResp).substring(0, 200));\n  return [{ json: { _skip: true } }];\n}\n\n// Handle explicit reject\nif (text.includes('\"reject\": true') || text.includes('\"reject\":true')) {\n  return [{ json: { _skip: true } }];\n}\n\nlet parsed;\ntry {\n  const m = text.match(/```json[\\s\\S]*?```/) ?\n    text.match(/```json\\s*([\\s\\S]*?)\\s*```/) :\n    text.match(/(\\{[\\s\\S]*\\})/);\n  if (!m) throw new Error('no json');\n  parsed = JSON.parse(m[1]);\n} catch(e) {\n  console.log('JSON parse fail:', text.substring(0, 300));\n  return [{ json: { _skip: true } }];\n}\n\nif (parsed.reject) return [{ json: { _skip: true } }];\nif (!parsed.title || !parsed.summary) return [{ json: { _skip: true } }];\nif ((parsed.ai_score || 0) < 60) return [{ json: { _skip: true } }];\n\nreturn [{\n  json: {\n    title: (parsed.title || '').substring(0, 200),\n    summary: parsed.summary || '',\n    pain_points: Array.isArray(parsed.pain_points) ? parsed.pain_points.slice(0, 5) : [],\n    target_customers: Array.isArray(parsed.target_customers) ? parsed.target_customers.slice(0, 4) : [],\n    monetization_strategies: Array.isArray(parsed.monetization_strategies) ? parsed.monetization_strategies.slice(0, 4) : [],\n    tech_stack_suggestions: Array.isArray(parsed.tech_stack_suggestions) ? parsed.tech_stack_suggestions.slice(0, 5) : [],\n    tags: Array.isArray(parsed.tags) ? parsed.tags.slice(0, 5) : [],\n    competitive_edge: parsed.competitive_edge || null,\n    why_now: parsed.why_now || null,\n    market_gap: parsed.market_gap || null,\n    ai_score: Math.min(100, Math.max(0, Number(parsed.ai_score) || 60)),\n    source_url: orig.source_url,\n    source_platform: orig.source_platform,\n    upvotes: orig.upvotes || 0,\n    comment_count: orig.comment_count || 0,\n    scraped_at: orig.scraped_at\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-ranking",
+      "name": "Ranking Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2400, 200],
+      "parameters": {
+        "jsCode": "const item = $json;\nif (item._skip) return [{ json: item }];\n\n// 1. Mentions score (0-100) — upvotes signal market interest\nconst upvotes = item.upvotes || 0;\nconst mentionsScore = Math.min(100, upvotes * 2);\n\n// 2. Freshness score (0-100) — decays 10pts/day\nconst now = Date.now();\nconst scrapedAt = item.scraped_at ? new Date(item.scraped_at).getTime() : now;\nconst ageHours = (now - scrapedAt) / (1000 * 60 * 60);\nconst freshnessScore = Math.max(0, 100 - (ageHours / 24) * 10);\n\n// 3. Market potential (0-100) — Claude's ai_score\nconst marketPotential = item.ai_score || 50;\n\n// 4. LLM analysis quality (0-100) — completeness of structured output\nlet llmScore = 50;\nif (item.competitive_edge) llmScore += 15;\nif (item.why_now)          llmScore += 15;\nif (item.market_gap)       llmScore += 10;\nif (item.pain_points && item.pain_points.length > 1) llmScore += 10;\nllmScore = Math.min(100, llmScore);\n\n// Composite: score = (mentions*0.3) + (freshness*0.2) + (market*0.3) + (llm*0.2)\nconst rankingScore =\n  (mentionsScore   * 0.3) +\n  (freshnessScore  * 0.2) +\n  (marketPotential * 0.3) +\n  (llmScore        * 0.2);\n\n// Pro Pick threshold: ~80 ≈ top 5% in normal distribution\nconst isProPick = rankingScore >= 80;\n\nreturn [{\n  json: {\n    title:                   item.title,\n    summary:                 item.summary,\n    pain_points:             item.pain_points,\n    target_customers:        item.target_customers,\n    monetization_strategies: item.monetization_strategies,\n    tech_stack_suggestions:  item.tech_stack_suggestions,\n    tags:                    item.tags,\n    competitive_edge:        item.competitive_edge,\n    why_now:                 item.why_now,\n    market_gap:              item.market_gap,\n    ai_score:                item.ai_score,\n    source_url:              item.source_url,\n    source_platform:         item.source_platform,\n    upvotes:                 item.upvotes,\n    comment_count:           item.comment_count,\n    ranking_score:           Math.round(rankingScore * 100) / 100,\n    is_pro_pick:             isProPick\n  }\n}];"
+      }
+    },
+    {
+      "id": "node-skip-check-2",
+      "name": "Skip Check 2",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2640, 200],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "conditions": [
+            {
+              "id": "cond-skip2",
+              "leftValue": "={{ $json._skip }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "node-ingest",
+      "name": "Ingest API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2880, 120],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.NEXT_BASE_URL }}/api/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $vars.INGEST_SECRET }}" },
+            { "name": "Content-Type",  "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 15000,
+          "retry": { "enabled": true, "maxTries": 3, "waitBetweenTries": 3000 },
+          "response": { "response": { "neverError": true } }
+        }
+      }
+    },
+    {
+      "id": "node-wait",
+      "name": "Wait 2s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3100, 200],
+      "parameters": {
+        "unit": "seconds",
+        "amount": 2
+      }
+    },
+    {
+      "id": "node-done",
+      "name": "Pipeline Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1920, 420],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Daily Trigger": {
+      "main": [
+        [
+          { "node": "HN Algolia – Fetch",    "type": "main", "index": 0 },
+          { "node": "Product Hunt – Fetch",  "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "HN Algolia – Fetch": {
+      "main": [ [ { "node": "Parse HN Items", "type": "main", "index": 0 } ] ]
+    },
+    "Parse HN Items": {
+      "main": [ [ { "node": "Merge Sources", "type": "main", "index": 0 } ] ]
+    },
+    "Product Hunt – Fetch": {
+      "main": [ [ { "node": "Parse PH Items", "type": "main", "index": 0 } ] ]
+    },
+    "Parse PH Items": {
+      "main": [ [ { "node": "Merge Sources", "type": "main", "index": 1 } ] ]
+    },
+    "Merge Sources": {
+      "main": [ [ { "node": "Pre-filter & Dedup", "type": "main", "index": 0 } ] ]
+    },
+    "Pre-filter & Dedup": {
+      "main": [ [ { "node": "Skip Check", "type": "main", "index": 0 } ] ]
+    },
+    "Skip Check": {
+      "main": [
+        [ { "node": "Split In Batches", "type": "main", "index": 0 } ],
+        []
+      ]
+    },
+    "Split In Batches": {
+      "main": [
+        [ { "node": "Claude Analysis",  "type": "main", "index": 0 } ],
+        [ { "node": "Pipeline Done",    "type": "main", "index": 0 } ]
+      ]
+    },
+    "Claude Analysis": {
+      "main": [ [ { "node": "Parse Claude Response", "type": "main", "index": 0 } ] ]
+    },
+    "Parse Claude Response": {
+      "main": [ [ { "node": "Ranking Score", "type": "main", "index": 0 } ] ]
+    },
+    "Ranking Score": {
+      "main": [ [ { "node": "Skip Check 2", "type": "main", "index": 0 } ] ]
+    },
+    "Skip Check 2": {
+      "main": [
+        [ { "node": "Ingest API", "type": "main", "index": 0 } ],
+        [ { "node": "Wait 2s",    "type": "main", "index": 0 } ]
+      ]
+    },
+    "Ingest API": {
+      "main": [ [ { "node": "Wait 2s", "type": "main", "index": 0 } ] ]
+    },
+    "Wait 2s": {
+      "main": [ [ { "node": "Split In Batches", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}
