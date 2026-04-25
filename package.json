@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "prebuild": "node -e \"try{require('fs').unlinkSync('src/middleware.ts')}catch(e){}\"",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
