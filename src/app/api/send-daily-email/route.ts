@@ -144,7 +144,10 @@ export async function POST(req: NextRequest) {
   // Vercel Cron: Authorization: Bearer <CRON_SECRET>
   // 수동 테스트: 동일한 헤더 사용
   const auth = req.headers.get('authorization') ?? ''
-  const token = auth.replace('Bearer ', '')
+  const headerToken = auth.replace('Bearer ', '').trim()
+  const queryToken = new URL(req.url).searchParams.get('secret') ?? ''
+  const token = headerToken || queryToken
+
   if (token !== process.env.CRON_SECRET) {
     return NextResponse.json({
       error: '인증 실패',
