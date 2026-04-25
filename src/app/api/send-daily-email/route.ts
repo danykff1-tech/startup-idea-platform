@@ -134,12 +134,23 @@ async function sendEmailViaResend(to: string, subject: string, html: string) {
   return res.json()
 }
 
+// Vercel Cron은 GET으로 호출 → POST를 재사용
+export async function GET(req: NextRequest) {
+  return POST(req)
+}
+
 export async function POST(req: NextRequest) {
   // 인증 — CRON_SECRET 일치 체크
+  // Vercel Cron: Authorization: Bearer <CRON_SECRET>
+  // 수동 테스트: 동일한 헤더 사용
   const auth = req.headers.get('authorization') ?? ''
   const token = auth.replace('Bearer ', '')
   if (token !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: '인증 실패' }, { status: 401 })
+    return NextResponse.json({
+      error: '인증 실패',
+      received: token || '(없음)',
+      expected_length: process.env.CRON_SECRET?.length ?? 0,
+    }, { status: 401 })
   }
 
   const supabase = createClient(
