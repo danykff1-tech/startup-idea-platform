@@ -21,11 +21,12 @@ interface Props {
   recentIdeas: Idea[]
   isPro: boolean
   bookmarkedIds: string[]
+  isLoggedIn?: boolean
 }
 
 type SortKey = 'newest' | 'score'
 
-export default function IdeaGrid({ todayIdeas, recentIdeas, isPro, bookmarkedIds }: Props) {
+export default function IdeaGrid({ todayIdeas, recentIdeas, isPro, bookmarkedIds, isLoggedIn = false }: Props) {
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('newest')
   const { can } = usePlan()
@@ -127,7 +128,7 @@ export default function IdeaGrid({ todayIdeas, recentIdeas, isPro, bookmarkedIds
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredToday.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} isPro={isPro} isBookmarked={bookmarked.has(idea.id)} />
+              <IdeaCard key={idea.id} idea={idea} isPro={isPro} isBookmarked={bookmarked.has(idea.id)} bookmarkCount={bookmarkedIds.length} isLoggedIn={isLoggedIn} />
             ))}
           </div>
         </section>
@@ -139,7 +140,7 @@ export default function IdeaGrid({ todayIdeas, recentIdeas, isPro, bookmarkedIds
           <h2 className="text-base font-semibold text-foreground mb-5">Recent Ideas</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredRecent.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} isPro={isPro} isBookmarked={bookmarked.has(idea.id)} />
+              <IdeaCard key={idea.id} idea={idea} isPro={isPro} isBookmarked={bookmarked.has(idea.id)} bookmarkCount={bookmarkedIds.length} isLoggedIn={isLoggedIn} />
             ))}
           </div>
         </section>

@@ -17,6 +17,8 @@ interface Props {
   idea: Idea
   isPro?: boolean
   isBookmarked?: boolean
+  bookmarkCount?: number
+  isLoggedIn?: boolean
 }
 
 const TAG_GRADIENTS: Record<string, string> = {
@@ -46,7 +48,7 @@ function getGradient(tags: string[]): string {
   return 'from-zinc-500 to-slate-600'
 }
 
-export default function IdeaCard({ idea, isPro = false, isBookmarked = false }: Props) {
+export default function IdeaCard({ idea, isPro = false, isBookmarked = false, bookmarkCount = 0, isLoggedIn = false }: Props) {
   const gradient = getGradient(idea.tags)
   const dateStr = new Date(idea.created_at).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
@@ -92,12 +94,13 @@ export default function IdeaCard({ idea, isPro = false, isBookmarked = false }: 
         </div>
       </Link>
 
-      {isPro && (
+      {isLoggedIn && (
         <div className="absolute top-[88px] right-3 z-10 -translate-y-1/2">
           <BookmarkButton
             ideaId={idea.id}
             initialBookmarked={isBookmarked}
             isPro={isPro}
+            bookmarkCount={bookmarkCount}
             size="sm"
           />
         </div>

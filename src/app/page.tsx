@@ -57,9 +57,11 @@ export default async function HomePage() {
     .single()
   const isPro = profile?.is_pro ?? false
 
-  const { data: bookmarkRows } = isPro
-    ? await supabase.from('bookmarks').select('idea_id').eq('user_id', user.id)
-    : { data: [] }
+  // 무료/Pro 모두 북마크 목록 조회 (무료는 3개 제한)
+  const { data: bookmarkRows } = await supabase
+    .from('bookmarks')
+    .select('idea_id')
+    .eq('user_id', user.id)
   const bookmarkedIds = new Set((bookmarkRows ?? []).map((b: { idea_id: string }) => b.idea_id))
 
   const { data: seenRows } = await supabase
@@ -98,7 +100,14 @@ export default async function HomePage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayed.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} isPro={false} isBookmarked={false} />
+                <IdeaCard
+                  key={idea.id}
+                  idea={idea}
+                  isPro={false}
+                  isBookmarked={bookmarkedIds.has(idea.id)}
+                  bookmarkCount={bookmarkedIds.size}
+                  isLoggedIn={true}
+                />
               ))}
             </div>
             <div className="mt-8">
@@ -149,6 +158,7 @@ export default async function HomePage() {
           recentIdeas={recentIdeas}
           isPro={true}
           bookmarkedIds={Array.from(bookmarkedIds)}
+          isLoggedIn={true}
         />
       )}
     </main>

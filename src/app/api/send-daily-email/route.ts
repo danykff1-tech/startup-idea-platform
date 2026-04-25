@@ -149,11 +149,7 @@ export async function POST(req: NextRequest) {
   const token = headerToken || queryToken
 
   if (token !== process.env.CRON_SECRET) {
-    return NextResponse.json({
-      error: '인증 실패',
-      received: token || '(없음)',
-      expected_length: process.env.CRON_SECRET?.length ?? 0,
-    }, { status: 401 })
+    return NextResponse.json({ error: '인증 실패' }, { status: 401 })
   }
 
   const supabase = createClient(
