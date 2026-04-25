@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/Sidebar'
+import { PlanProvider } from '@/lib/plan-context'
 import { createClient } from '@/lib/supabase/server'
 
 const geistSans = Geist({
@@ -64,10 +65,12 @@ export default async function RootLayout({
       {user ? (
         /* ── Logged-in: sidebar + scrollable content ── */
         <body className="h-screen overflow-hidden bg-background text-foreground flex">
-          <Sidebar user={sidebarUser} />
-          <div className="flex-1 overflow-y-auto">
-            {children}
-          </div>
+          <PlanProvider isPro={sidebarUser?.is_pro ?? false}>
+            <Sidebar user={sidebarUser} />
+            <div className="flex-1 overflow-y-auto">
+              {children}
+            </div>
+          </PlanProvider>
         </body>
       ) : (
         /* ── Guest: top navbar + footer ── */

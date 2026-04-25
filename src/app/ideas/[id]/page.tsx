@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { FREE_VIEWS_PER_DAY } from '@/lib/constants'
 import BookmarkButton from '@/components/BookmarkButton'
+import { ProBanner } from '@/components/ProGate'
+import { can } from '@/lib/features'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -27,33 +29,6 @@ function hashCode(str: string): number {
     hash |= 0
   }
   return Math.abs(hash) || 1
-}
-
-/* ── Simple metric pill ── */
-function MetricPill({
-  label,
-  value,
-}: {
-  label: string
-  value: number | null
-}) {
-  const score = value ?? 50
-  const level = score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low'
-  const colors =
-    level === 'High'
-      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-      : level === 'Medium'
-      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-
-  return (
-    <div className="flex flex-col gap-1 min-w-[90px]">
-      <span className="text-xs text-zinc-500 dark:text-zinc-400">{label}</span>
-      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full w-fit ${colors}`}>
-        {level}
-      </span>
-    </div>
-  )
 }
 
 /* ── Prose section with icon ── */
@@ -178,16 +153,6 @@ export default async function IdeaDetailPage({ params }: PageProps) {
     isBookmarked = !!bm
   }
 
-  /* ── Derived viability signals (simple scores, no bars) ── */
-  const opportunity = idea.ai_score ?? 50
-  const problemSeverity = Math.min(100, (idea.pain_points?.length ?? 0) * 28 + 15)
-  const marketSize = Math.min(100, (idea.target_customers?.length ?? 0) * 30 + 10)
-  const revenuePotential = Math.min(100, (idea.monetization_strategies?.length ?? 0) * 28 + 15)
-  const feasibility = Math.min(100, 95 - (idea.tech_stack_suggestions?.length ?? 0) * 8)
-  const overallScore = Math.round(
-    (opportunity + problemSeverity + marketSize + revenuePotential + feasibility) / 5
-  )
-
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">
       {/* ── Back ── */}
@@ -232,57 +197,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         {idea.summary}
       </p>
 
-      {/* ── Viability snapshot (pills only, no bars) ── */}
-      <div className="rounded-2xl border border-border bg-card p-5 mb-10">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold text-foreground">Viability Snapshot</span>
-          <span className={`text-xl font-bold ${
-            overallScore >= 70 ? 'text-emerald-500' :
-            overallScore >= 45 ? 'text-amber-500' : 'text-red-500'
-          }`}>
-            {overallScore}<span className="text-sm font-normal text-zinc-400">/100</span>
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-3">
-          <MetricPill label="Opportunity" value={opportunity} />
-          <MetricPill label="Problem Severity" value={problemSeverity} />
-          <MetricPill label="Market Size" value={marketSize} />
-          <MetricPill label="Revenue Potential" value={revenuePotential} />
-          <MetricPill label="Feasibility" value={feasibility} />
-        </div>
-      </div>
-
-      {/* ── Deep-dive analysis sections ── */}
+      {/* ── Analysis sections ── */}
       <div className="space-y-8">
 
-        {/* Competitive Edge */}
-        {idea.competitive_edge && (
-          <AnalysisSection icon="⚔️" title="Competitive Edge">
-            {idea.competitive_edge}
-          </AnalysisSection>
-        )}
-
-        {/* Why Now */}
-        {idea.why_now && (
-          <AnalysisSection icon="⏱️" title="Why Now?">
-            {idea.why_now}
-          </AnalysisSection>
-        )}
-
-        {/* Market Gap */}
-        {idea.market_gap && (
-          <AnalysisSection icon="🔍" title="Market Gap">
-            {idea.market_gap}
-          </AnalysisSection>
-        )}
-
-        {/* Divider */}
-        {(idea.competitive_edge || idea.why_now || idea.market_gap) &&
-          (idea.pain_points?.length > 0 || idea.target_customers?.length > 0) && (
-          <hr className="border-border" />
-        )}
-
-        {/* Problems solved */}
+        {/* FREE: Problems solved */}
         {idea.pain_points?.length > 0 && (
           <AnalysisSection icon="!" title="Problems This Solves">
             <ul className="space-y-2 mt-1">
@@ -296,7 +214,7 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </AnalysisSection>
         )}
 
-        {/* Target customers */}
+        {/* FREE: Who it's for */}
         {idea.target_customers?.length > 0 && (
           <AnalysisSection icon="👥" title="Who It's For">
             <ul className="space-y-2 mt-1">
@@ -310,54 +228,55 @@ export default async function IdeaDetailPage({ params }: PageProps) {
           </AnalysisSection>
         )}
 
-        {/* Monetization */}
-        {idea.monetization_strategies?.length > 0 && (
-          <AnalysisSection icon="💰" title="How to Make Money">
-            <ul className="space-y-2 mt-1">
-              {idea.monetization_strategies.map((strategy: string, i: number) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-emerald-400 shrink-0">$</span>
-                  {strategy}
-                </li>
-              ))}
-            </ul>
-          </AnalysisSection>
-        )}
+        <hr className="border-border" />
 
-        {/* Tech stack */}
-        {idea.tech_stack_suggestions?.length > 0 && (
-          <AnalysisSection icon="🛠️" title="Tech Stack">
-            <div className="flex flex-wrap gap-2 mt-1">
-              {idea.tech_stack_suggestions.map((tech: string, i: number) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </AnalysisSection>
-        )}
-
-        {/* Source */}
-        {idea.source_platform && (
-          <p className="text-xs text-zinc-400 dark:text-zinc-500 pt-2">
-            Source: {idea.source_platform}
-            {idea.source_url && (
-              <>
-                {' · '}
-                <a
-                  href={idea.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                >
-                  View original
-                </a>
-              </>
+        {/* PRO: Deep analysis */}
+        {can('deep_analysis', isPro) ? (
+          <>
+            {idea.competitive_edge && (
+              <AnalysisSection icon="⚔️" title="Competitive Edge">
+                {idea.competitive_edge}
+              </AnalysisSection>
             )}
-          </p>
+            {idea.why_now && (
+              <AnalysisSection icon="⏱️" title="Why Now?">
+                {idea.why_now}
+              </AnalysisSection>
+            )}
+            {idea.market_gap && (
+              <AnalysisSection icon="🔍" title="Market Gap">
+                {idea.market_gap}
+              </AnalysisSection>
+            )}
+            {idea.monetization_strategies?.length > 0 && (
+              <AnalysisSection icon="💰" title="How to Make Money">
+                <ul className="space-y-2 mt-1">
+                  {idea.monetization_strategies.map((s: string, i: number) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-emerald-400 shrink-0">$</span>
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              </AnalysisSection>
+            )}
+            {idea.tech_stack_suggestions?.length > 0 && (
+              <AnalysisSection icon="🛠️" title="Tech Stack">
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {idea.tech_stack_suggestions.map((tech: string, i: number) => (
+                    <span
+                      key={i}
+                      className="px-3 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 text-xs font-medium"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
+              </AnalysisSection>
+            )}
+          </>
+        ) : (
+          <ProBanner hint="Competitive edge, monetization strategies, tech stack and more — unlock the full analysis." />
         )}
 
         {/* ── Pro upgrade CTA (free users only) ── */}

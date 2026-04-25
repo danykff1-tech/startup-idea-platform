@@ -8,17 +8,22 @@ import { ShineBorder } from '@/components/ui/shine-border'
 import CheckoutButton from '@/components/CheckoutButton'
 
 const freePlanFeatures = [
-  '3 idea analyses per day',
-  'AI-curated idea cards',
+  '3 idea detail views per day',
+  'AI-curated idea feed',
   'Basic tag filtering',
+  'Core idea info (problem, audience)',
+  'Up to 3 saved ideas',
 ]
 
 const proPlanFeatures = [
-  'Unlimited idea analyses',
-  'Full business viability reports',
-  'Keyword trend charts',
-  'New idea notifications',
-  'Priority support',
+  'Unlimited idea detail views',
+  'Full deep analysis (competitive edge, why now, market gap)',
+  'Monetization strategies & tech stack',
+  'Sort by AI Score',
+  'Unlimited bookmarks',
+  'CSV export',
+  'Email alerts & keyword notifications (coming soon)',
+  'Weekly trend archive (coming soon)',
 ]
 
 export default async function PricingPage() {

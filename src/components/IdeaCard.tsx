@@ -8,7 +8,7 @@ interface Idea {
   title: string
   summary: string
   tags: string[]
-  source_platform: string
+  source_platform?: string
   ai_score: number | null
   created_at: string
 }
