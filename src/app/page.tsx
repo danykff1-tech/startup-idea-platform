@@ -81,24 +81,21 @@ export default async function HomePage() {
   if (!isPro) {
     const displayed = shuffled.slice(0, 3)
     return (
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight">
-            Today&apos;s Ideas<br />Curated for You
-          </h1>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
-            Fresh startup ideas analyzed by AI · Updated daily
-          </p>
+      <main className="max-w-5xl mx-auto px-6 py-10">
+        {/* Page header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Ideas</h1>
+          <p className="text-sm text-muted-foreground mt-1">AI-curated startup ideas · Updated daily</p>
         </div>
 
         {displayed.length === 0 ? (
           <div className="text-center py-24">
             <div className="text-5xl mb-4">✦</div>
-            <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
+            <p className="text-sm text-zinc-400">No ideas available yet.</p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {displayed.map((idea) => (
                 <IdeaCard
                   key={idea.id}
@@ -110,17 +107,18 @@ export default async function HomePage() {
                 />
               ))}
             </div>
+            {/* Upgrade prompt */}
             <div className="mt-8">
               <Link href="/pricing" className="block group">
-                <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-rose-500/10 p-8 text-center hover:border-amber-500/40 transition-colors">
-                  <div className="flex items-center justify-center gap-3 mb-3">
-                    <Lock size={20} className="text-amber-500" />
-                    <span className="text-lg font-bold text-foreground">Unlock More Ideas</span>
+                <div className="rounded-2xl border border-border bg-zinc-50 dark:bg-zinc-900 p-8 text-center hover:border-amber-500/40 transition-colors">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Lock size={16} className="text-amber-500" />
+                    <span className="font-semibold text-foreground">Unlock all ideas</span>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Upgrade to Pro to see today&apos;s new ideas first, full analysis, and keyword trends.
+                  <p className="text-sm text-muted-foreground mb-5">
+                    Upgrade to Pro for unlimited ideas, full AI analysis &amp; more.
                   </p>
-                  <span className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground text-background font-medium text-sm group-hover:opacity-80 transition-opacity">
+                  <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium text-sm group-hover:opacity-80 transition-opacity">
                     Upgrade to Pro · $15/mo
                   </span>
                 </div>
@@ -137,20 +135,17 @@ export default async function HomePage() {
   const recentIdeas = unseenIdeas.filter((i) => !i.created_at.startsWith(today))
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-12">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4 leading-tight">
-          Today&apos;s Ideas<br />Curated for You
-        </h1>
-        <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
-          Fresh startup ideas analyzed by AI · Updated daily
-        </p>
+    <main className="max-w-5xl mx-auto px-6 py-10">
+      {/* Page header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-foreground">Ideas</h1>
+        <p className="text-sm text-muted-foreground mt-1">AI-curated startup ideas · Updated daily</p>
       </div>
 
       {allIdeasList.length === 0 ? (
         <div className="text-center py-24">
           <div className="text-5xl mb-4">✦</div>
-          <p className="text-lg text-zinc-500 dark:text-zinc-400">No ideas available yet.</p>
+          <p className="text-sm text-zinc-400">No ideas available yet.</p>
         </div>
       ) : (
         <IdeaGrid
