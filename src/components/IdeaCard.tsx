@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import BookmarkButton from '@/components/BookmarkButton'
+import { TiltCard } from '@/components/ui/tilt-card'
 
 interface Idea {
   id: string
@@ -55,7 +56,7 @@ export default function IdeaCard({ idea, isPro = false, isBookmarked = false, bo
   })
 
   return (
-    <div className="relative h-full group">
+    <TiltCard className="relative h-full group rounded-2xl">
       <Link href={`/ideas/${idea.id}`} className="block h-full">
         <div className="h-full flex flex-col rounded-2xl border border-border bg-card overflow-hidden hover:border-zinc-300 dark:hover:border-zinc-600 hover:shadow-lg transition-all duration-200">
 
@@ -105,6 +106,6 @@ export default function IdeaCard({ idea, isPro = false, isBookmarked = false, bo
           />
         </div>
       )}
-    </div>
+    </TiltCard>
   )
 }

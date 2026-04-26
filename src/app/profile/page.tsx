@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { User, Mail, Crown, Calendar, Shield } from 'lucide-react'
+import { User, Mail, Crown, Calendar, Shield, Bell } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
+import SubscribeToggle from '@/components/SubscribeToggle'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -29,6 +30,15 @@ export default async function ProfilePage() {
     .single()
 
   const isPro = profile?.is_pro ?? false
+
+  // 이메일 구독 상태 확인
+  const { data: emailSub } = await supabase
+    .from('email_subscribers')
+    .select('is_active')
+    .eq('email', user.email!)
+    .maybeSingle()
+  const isEmailSubscribed = emailSub?.is_active ?? false
+
   const joinDate = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : ''
@@ -163,6 +173,21 @@ export default async function ProfilePage() {
                 </Link>
               </div>
             )}
+          </CardContent>
+        </Card>
+        {/* Email subscription */}
+        <Card className="rounded-2xl border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Bell className="size-5" />
+              Daily Idea Email
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SubscribeToggle
+              email={user.email!}
+              initialSubscribed={isEmailSubscribed}
+            />
           </CardContent>
         </Card>
       </div>

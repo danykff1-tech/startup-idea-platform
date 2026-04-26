@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import IdeaCard from '@/components/IdeaCard'
 import SubscribeForm from '@/components/SubscribeForm'
+import { FallingPattern } from '@/components/ui/falling-pattern'
 import { Lock, Search, Filter, BookmarkIcon, Bell, Sparkles, TrendingUp, Shuffle } from 'lucide-react'
 
 interface Idea {
@@ -44,7 +45,15 @@ export default function LandingPage({ previewIdea }: Props) {
   return (
     <>
       {/* ── HERO ── */}
-      <section className="max-w-5xl mx-auto px-4 pt-16 pb-20 text-center">
+      <section className="relative max-w-5xl mx-auto px-4 pt-16 pb-20 text-center overflow-hidden">
+        {/* Falling pattern background */}
+        <div className="absolute inset-0 -z-10 pointer-events-none">
+          <FallingPattern
+            color="var(--foreground)"
+            className="opacity-[0.07] [mask-image:radial-gradient(ellipse_at_50%_30%,black_20%,transparent_70%)]"
+            density={1.5}
+          />
+        </div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-medium text-zinc-600 dark:text-zinc-300 mb-6">
           <Sparkles size={12} className="text-amber-500" />
           AI-curated startup ideas, delivered daily

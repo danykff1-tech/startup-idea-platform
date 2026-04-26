@@ -61,3 +61,28 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ success: true }, { status: 201 })
 }
+
+// DELETE /api/subscribe — 로그인된 유저가 직접 구독 취소
+export async function DELETE(req: NextRequest) {
+  let body: { email?: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
+  }
+
+  const email = (body.email ?? '').trim().toLowerCase()
+  if (!email) return NextResponse.json({ error: '이메일 필요' }, { status: 400 })
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  await supabase
+    .from('email_subscribers')
+    .update({ is_active: false })
+    .eq('email', email)
+
+  return NextResponse.json({ success: true })
+}
