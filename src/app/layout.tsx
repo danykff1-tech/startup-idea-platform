@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/Sidebar'
+import MobileNav from '@/components/MobileNav'
 import { PlanProvider } from '@/lib/plan-context'
 import { createClient } from '@/lib/supabase/server'
 
@@ -67,9 +68,10 @@ export default async function RootLayout({
         <body className="h-screen overflow-hidden bg-background text-foreground flex">
           <PlanProvider isPro={sidebarUser?.is_pro ?? false}>
             <Sidebar user={sidebarUser} />
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto pb-16 md:pb-0">
               {children}
             </div>
+            <MobileNav isPro={sidebarUser?.is_pro ?? false} />
           </PlanProvider>
         </body>
       ) : (

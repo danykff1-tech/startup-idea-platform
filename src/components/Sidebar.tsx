@@ -28,7 +28,7 @@ export default function Sidebar({ user }: Props) {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 shrink-0 h-screen flex flex-col border-r border-border bg-background sticky top-0 z-40">
+    <aside className="hidden md:flex w-56 shrink-0 h-screen flex-col border-r border-border bg-background sticky top-0 z-40">
 
       {/* ── Logo ── */}
       <div className="px-4 h-14 flex items-center border-b border-border shrink-0">
