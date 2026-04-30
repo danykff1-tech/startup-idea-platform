@@ -184,40 +184,37 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '아이디어 없음' }, { status: 500 })
   }
 
+  // 3) 오늘의 아이디어 1건 선택 — 오늘 발행된 것 중 AI Score 최고, 없으면 전체 최고
+  const today = new Date().toISOString().split('T')[0]
+  const todayIdeas = allIdeas.filter((i) => i.created_at.startsWith(today))
+  const pool = todayIdeas.length > 0 ? todayIdeas : allIdeas
+
+  const featured = [...pool].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))[0]
+
+  // 오늘 이미 이 아이디어를 받은 구독자 ID 목록 조회 (재실행 시 중복 방지)
+  const { data: alreadySentRows } = await supabase
+    .from('email_sent_ideas')
+    .select('subscriber_id')
+    .eq('idea_id', featured.id)
+
+  const alreadySentIds = new Set((alreadySentRows ?? []).map((r: { subscriber_id: string }) => r.subscriber_id))
+
   let sentCount = 0
   const failures: { email: string; error: string }[] = []
 
-  // 3) 구독자별로 아직 안 보낸 아이디어 중 1건 선택 → 전송 → 기록
+  // 4) 모든 구독자에게 같은 아이디어 전송
   for (const sub of subscribers) {
+    if (alreadySentIds.has(sub.id)) continue   // 이미 보낸 구독자 스킵
+
     try {
-      // 해당 구독자가 이미 받은 idea_id 목록
-      const { data: sentRows } = await supabase
-        .from('email_sent_ideas')
-        .select('idea_id')
-        .eq('subscriber_id', sub.id)
-
-      const sentIds = new Set((sentRows ?? []).map((r: { idea_id: string }) => r.idea_id))
-
-      // 미전송 아이디어 중 AI Score 가장 높은 것 하나 선택
-      const unsent = allIdeas
-        .filter((i) => !sentIds.has(i.id))
-        .sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))
-
-      if (unsent.length === 0) {
-        // 모든 아이디어를 다 받은 구독자 → 건너뜀
-        continue
-      }
-
-      const picked = unsent[0]
-      const html = renderEmailHtml(picked, sub, baseUrl)
-      const subject = `✦ ${picked.title}`
+      const html = renderEmailHtml(featured, sub, baseUrl)
+      const subject = `✦ 오늘의 아이디어: ${featured.title}`
 
       await sendEmailViaResend(sub.email, subject, html)
 
-      // 전송 기록 저장
       await supabase.from('email_sent_ideas').insert({
         subscriber_id: sub.id,
-        idea_id: picked.id,
+        idea_id: featured.id,
       })
 
       sentCount++
@@ -231,7 +228,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     success: true,
     sent: sentCount,
+    skipped: alreadySentIds.size,
     total: subscribers.length,
+    featured_idea: featured.title,
     failures,
   })
 }
