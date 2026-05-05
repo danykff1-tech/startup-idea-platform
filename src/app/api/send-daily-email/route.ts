@@ -191,11 +191,12 @@ export async function POST(req: NextRequest) {
 
   const featured = [...pool].sort((a, b) => (b.ai_score ?? 0) - (a.ai_score ?? 0))[0]
 
-  // 오늘 이미 이 아이디어를 받은 구독자 ID 목록 조회 (재실행 시 중복 방지)
+  // 오늘(UTC 기준 00:00~) 이미 이메일을 받은 구독자 ID 목록 — 재실행 시 중복 방지
+  const todayStart = `${today}T00:00:00.000Z`
   const { data: alreadySentRows } = await supabase
     .from('email_sent_ideas')
     .select('subscriber_id')
-    .eq('idea_id', featured.id)
+    .gte('created_at', todayStart)
 
   const alreadySentIds = new Set((alreadySentRows ?? []).map((r: { subscriber_id: string }) => r.subscriber_id))
 
@@ -230,7 +231,8 @@ export async function POST(req: NextRequest) {
     sent: sentCount,
     skipped: alreadySentIds.size,
     total: subscribers.length,
-    featured_idea: featured.title,
+    featured_idea: { id: featured.id, title: featured.title, score: featured.ai_score },
+    today,
     failures,
   })
 }
