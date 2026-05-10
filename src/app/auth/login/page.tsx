@@ -55,13 +55,13 @@ export default function LoginPage() {
           options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
         })
         if (error) { setError(error.message); return }
-        setMessage('이메일을 확인해서 계정을 인증해주세요!')
+        setMessage('Check your email to confirm your account!')
       } else if (mode === 'reset') {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/auth/callback`,
         })
         if (error) { setError(error.message); return }
-        setMessage('비밀번호 재설정 링크를 이메일로 보냈어요!')
+        setMessage('Password reset link sent — check your email!')
       }
     } finally {
       setLoading(false)

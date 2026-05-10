@@ -17,7 +17,7 @@ export async function POST() {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 })
+    return NextResponse.json({ error: 'Login required.' }, { status: 401 })
   }
 
   // 이미 Pro인 경우 체크아웃 불필요
@@ -28,7 +28,7 @@ export async function POST() {
     .single()
 
   if (profile?.is_pro) {
-    return NextResponse.json({ error: '이미 Pro 플랜입니다.' }, { status: 400 })
+    return NextResponse.json({ error: 'Already on Pro plan.' }, { status: 400 })
   }
 
   const checkoutUrl = buildCheckoutUrl(user.email!, user.id)

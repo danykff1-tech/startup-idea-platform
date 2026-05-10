@@ -27,9 +27,9 @@ export async function GET(req: NextRequest) {
 <html><head><meta charset="utf-8"><title>Unsubscribed — idealike</title>
 <style>body{font-family:-apple-system,sans-serif;max-width:480px;margin:80px auto;padding:0 20px;text-align:center;color:#333}h1{color:#111}a{color:#0070f3}</style></head>
 <body>
-  <h1>구독이 취소되었습니다</h1>
-  <p>더 이상 idealike 일일 이메일을 받지 않습니다.</p>
-  <p><a href="https://idealike.xyz">idealike.xyz로 돌아가기</a></p>
+  <h1>You've been unsubscribed</h1>
+  <p>You will no longer receive daily emails from idealike.</p>
+  <p><a href="https://idealike.xyz">Back to idealike.xyz</a></p>
 </body></html>`,
     { headers: { 'Content-Type': 'text/html' } }
   )

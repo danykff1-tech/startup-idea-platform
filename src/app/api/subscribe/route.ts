@@ -11,13 +11,13 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
   }
 
   const email = (body.email ?? '').trim().toLowerCase()
 
   if (!email || !isValidEmail(email)) {
-    return NextResponse.json({ error: '올바른 이메일을 입력해주세요.' }, { status: 400 })
+    return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
 
   const supabase = createClient(
@@ -44,19 +44,19 @@ export async function POST(req: NextRequest) {
 
     if (error) {
       console.error('[Subscribe] 재활성화 실패', error)
-      return NextResponse.json({ error: '구독 처리 중 오류' }, { status: 500 })
+      return NextResponse.json({ error: 'Subscription error. Please try again.' }, { status: 500 })
     }
     return NextResponse.json({ success: true, resubscribed: true })
   }
 
-  // 신규 구독
+  // New subscription
   const { error } = await supabase
     .from('email_subscribers')
     .insert({ email })
 
   if (error) {
-    console.error('[Subscribe] DB 저장 실패', error)
-    return NextResponse.json({ error: '구독 처리 중 오류' }, { status: 500 })
+    console.error('[Subscribe] DB insert failed', error)
+    return NextResponse.json({ error: 'Subscription error. Please try again.' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true }, { status: 201 })
@@ -68,11 +68,11 @@ export async function DELETE(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: '잘못된 요청' }, { status: 400 })
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
   }
 
   const email = (body.email ?? '').trim().toLowerCase()
-  if (!email) return NextResponse.json({ error: '이메일 필요' }, { status: 400 })
+  if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 })
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

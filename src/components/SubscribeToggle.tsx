@@ -26,10 +26,9 @@ export default function SubscribeToggle({ email, initialSubscribed }: Props) {
         })
         if (res.ok) {
           setSubscribed(false)
-          setMessage('구독이 취소됐어요.')
+          setMessage('Unsubscribed successfully.')
         }
       } else {
-        // 구독
         const res = await fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -37,7 +36,7 @@ export default function SubscribeToggle({ email, initialSubscribed }: Props) {
         })
         if (res.ok) {
           setSubscribed(true)
-          setMessage('구독 완료! 내일 첫 아이디어를 보내드릴게요.')
+          setMessage('Subscribed! Your first idea arrives tomorrow.')
         }
       }
     } finally {
@@ -49,12 +48,12 @@ export default function SubscribeToggle({ email, initialSubscribed }: Props) {
     <div className="flex items-center justify-between">
       <div>
         <p className="text-sm font-medium text-foreground">
-          {subscribed ? '일일 아이디어 이메일 수신 중' : '일일 아이디어 이메일'}
+          {subscribed ? 'Daily idea email · Active' : 'Daily idea email'}
         </p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {subscribed
-            ? `${email} 으로 매일 AI 추천 아이디어 1개를 보내드려요`
-            : '매일 AI가 고른 사업 아이디어 1개를 이메일로 받아보세요'}
+            ? `Sending one AI-picked idea to ${email} every day`
+            : 'Get one AI-curated startup idea in your inbox every day'}
         </p>
         {message && (
           <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">{message}</p>
@@ -70,7 +69,7 @@ export default function SubscribeToggle({ email, initialSubscribed }: Props) {
         }`}
       >
         {subscribed ? <BellOff size={15} /> : <Bell size={15} />}
-        {loading ? '...' : subscribed ? '구독 취소' : '구독하기'}
+        {loading ? '...' : subscribed ? 'Unsubscribe' : 'Subscribe'}
       </button>
     </div>
   )

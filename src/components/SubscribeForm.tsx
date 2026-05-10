@@ -41,10 +41,10 @@ export default function SubscribeForm() {
     <form
       onSubmit={handleSubmit}
       className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
-      aria-label="이메일 구독 양식"
+      aria-label="Email subscription form"
     >
       <label htmlFor="subscribe-email" className="sr-only">
-        이메일 주소
+        Email address
       </label>
       <input
         id="subscribe-email"

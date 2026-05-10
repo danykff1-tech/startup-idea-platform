@@ -42,7 +42,7 @@ function renderEmailHtml(idea: Idea, subscriber: Subscriber, baseUrl: string): s
           <tr>
             <td style="background:#1a1a1a;padding:24px;text-align:left">
               <div style="color:#fff;font-size:20px;font-weight:700">idealike</div>
-              <div style="color:#999;font-size:12px;margin-top:4px">오늘의 아이디어 · Daily pick</div>
+              <div style="color:#999;font-size:12px;margin-top:4px">Today's idea · Daily pick</div>
             </td>
           </tr>
 
@@ -76,7 +76,7 @@ function renderEmailHtml(idea: Idea, subscriber: Subscriber, baseUrl: string): s
               <!-- CTA -->
               <div style="text-align:center;margin:24px 0 8px">
                 <a href="${ideaUrl}" style="display:inline-block;background:#111;color:#fff;font-size:14px;font-weight:600;padding:13px 28px;border-radius:10px;text-decoration:none">
-                  전체 분석 보기 →
+                  View full analysis →
                 </a>
               </div>
             </td>
@@ -86,10 +86,10 @@ function renderEmailHtml(idea: Idea, subscriber: Subscriber, baseUrl: string): s
           <tr>
             <td style="background:#fafafa;padding:20px 28px;text-align:center;border-top:1px solid #eee">
               <p style="font-size:12px;color:#888;margin:0 0 8px">
-                매일 아침, AI가 고른 사업 아이디어 한 건.
+                One AI-curated startup idea, every morning.
               </p>
               <p style="font-size:11px;color:#aaa;margin:0">
-                <a href="${unsubUrl}" style="color:#888;text-decoration:underline">구독 취소</a>
+                <a href="${unsubUrl}" style="color:#888;text-decoration:underline">Unsubscribe</a>
                 &nbsp;·&nbsp;
                 <a href="${baseUrl}" style="color:#888;text-decoration:underline">idealike.xyz</a>
               </p>
@@ -149,7 +149,7 @@ export async function POST(req: NextRequest) {
   const token = headerToken || queryToken
 
   if (token !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: '인증 실패' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const supabase = createClient(
@@ -166,13 +166,13 @@ export async function POST(req: NextRequest) {
     .eq('is_active', true)
 
   if (subError) {
-    return NextResponse.json({ error: '구독자 조회 실패', detail: subError.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch subscribers', detail: subError.message }, { status: 500 })
   }
   if (!subscribers || subscribers.length === 0) {
-    return NextResponse.json({ success: true, sent: 0, message: '활성 구독자 없음' })
+    return NextResponse.json({ success: true, sent: 0, message: 'No active subscribers' })
   }
 
-  // 2) 발행된 아이디어 전체 조회 (최신 200개)
+  // 2) Fetch published ideas (latest 200)
   const { data: allIdeas, error: ideasError } = await supabase
     .from('ideas')
     .select('id, title, summary, tags, ai_score, competitive_edge, why_now, created_at')
@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
     .limit(200)
 
   if (ideasError || !allIdeas || allIdeas.length === 0) {
-    return NextResponse.json({ error: '아이디어 없음' }, { status: 500 })
+    return NextResponse.json({ error: 'No ideas available' }, { status: 500 })
   }
 
   // 3) 오늘의 아이디어 1건 선택 — 오늘 발행된 것 중 AI Score 최고, 없으면 전체 최고
@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const html = renderEmailHtml(featured, sub, baseUrl)
-      const subject = `✦ 오늘의 아이디어: ${featured.title}`
+      const subject = `✦ Today's idea: ${featured.title}`
 
       await sendEmailViaResend(sub.email, subject, html)
 

@@ -19,13 +19,13 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'idealike – 정제된 스타트업 아이디어',
+  title: 'idealike – AI-curated startup ideas, daily',
   description:
-    '인터넷 곳곳의 아이디어를 AI가 매일 크롤링·정제·점수화합니다. 예비 창업자와 1인 개발자를 위한 사업 아이디어 큐레이션.',
-  keywords: ['스타트업 아이디어', 'SaaS', '사업 아이디어', '예비창업자', '1인개발자', 'AI 큐레이션'],
+    'idealike crawls the internet for startup ideas, removes duplicates, and scores them by demand signals. Curated daily for founders and indie hackers.',
+  keywords: ['startup ideas', 'SaaS ideas', 'business ideas', 'indie hacker', 'AI curation', 'side project ideas'],
   openGraph: {
-    title: 'idealike – 정제된 스타트업 아이디어',
-    description: '매일 AI가 골라주는 사업 아이디어. 창업 리서치 시간을 절반으로 줄이세요.',
+    title: 'idealike – AI-curated startup ideas, daily',
+    description: 'Spend less time on research. More time on building. Fresh startup ideas scored by AI, every day.',
     url: 'https://idealike.xyz',
     siteName: 'idealike',
     locale: 'ko_KR',
@@ -62,7 +62,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html lang="ko" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       {user ? (
         /* ── Logged-in: sidebar + scrollable content ── */
         <body className="h-screen overflow-hidden bg-background text-foreground flex">
